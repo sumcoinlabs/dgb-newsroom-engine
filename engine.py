@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""DigiByte Newsroom Engine v0.1: review-first, source-linked discovery.
+"""DigiByte Newsroom Engine v0.2: review-first, source-linked AI drafting.
 
 No automated public publishing, social scraping, image scraping, or credentials.
 Python 3.8+ stdlib only. Runs as unprivileged user on loopback.
 """
 import argparse
+import ai_writer
 import datetime as dt
 from contextlib import closing
 import hashlib
@@ -31,6 +32,8 @@ DBFILE = STATE / 'stories.sqlite3'
 PORT = int(os.environ.get('DGB_ENGINE_PORT', '8770'))
 MAX_RSS = 1_500_000
 MAX_POST = 12_000
+AI_DAY_LIMIT = 8
+AI_STORY_LIMIT = 2
 CSRF = secrets.token_hex(24)
 LOCK = threading.RLock()
 IS_SCANNING = False
@@ -97,6 +100,10 @@ def get_db():
     conn.execute('''CREATE TABLE IF NOT EXISTS drafts (
        story_id TEXT PRIMARY KEY REFERENCES stories(id), content TEXT NOT NULL,
        generated_at TEXT NOT NULL)''')
+    conn.execute('''CREATE TABLE IF NOT EXISTS ai_requests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, story_id TEXT NOT NULL,
+      started_at TEXT NOT NULL, date_utc TEXT NOT NULL,
+      status TEXT NOT NULL, model TEXT NOT NULL)''')
     conn.commit()
     return conn
 
@@ -220,16 +227,72 @@ def draft_for(story_id):
         story=c.execute('SELECT * FROM stories WHERE id=?',(story_id,)).fetchone()
         if not story:raise ValueError('Story not found')
         if story['status']=='dismissed':raise ValueError('Dismissed story')
-        draft=make_draft(dict(story))
-        c.execute('INSERT OR REPLACE INTO drafts VALUES (?,?,?)',(story_id,json.dumps(draft,ensure_ascii=False),now()))
-        c.execute("UPDATE stories SET status='drafted' WHERE id=?",(story_id,))
-        c.commit()
+        stored=c.execute('SELECT content FROM drafts WHERE story_id=?',(story_id,)).fetchone()
+        if stored:
+            draft=json.loads(stored['content'])
+        else:
+            draft=make_draft(dict(story))
+            c.execute('INSERT INTO drafts VALUES (?,?,?)',(story_id,json.dumps(draft,ensure_ascii=False),now()))
+            c.execute("UPDATE stories SET status='drafted' WHERE id=?",(story_id,))
+            c.commit()
     return draft
 
 def get_draft(story_id):
     with closing(get_db()) as c:
         r=c.execute('SELECT content FROM drafts WHERE story_id=?',(story_id,)).fetchone()
         return json.loads(r['content']) if r else None
+
+def ai_usage(story_id=None):
+    day=dt.datetime.now(dt.timezone.utc).date().isoformat()
+    with closing(get_db()) as c:
+        used=c.execute('SELECT COUNT(*) FROM ai_requests WHERE date_utc=?',(day,)).fetchone()[0]
+        by_story=(c.execute('SELECT COUNT(*) FROM ai_requests WHERE story_id=?',(story_id,)).fetchone()[0]
+                  if story_id else 0)
+    return {'daily_used':used,'daily_limit':AI_DAY_LIMIT,'story_used':by_story,'story_limit':AI_STORY_LIMIT}
+
+def research_story(story_id,fetcher=None,caller=None):
+    """Explicit user-triggered, rate-limited Groq article generation, never publishes."""
+    if not re.fullmatch(r'[0-9a-f]{32}',story_id):raise ValueError('Invalid id')
+    if not ai_writer.available() and caller is None:
+        raise ValueError('Groq key not configured on this server')
+    with LOCK:
+        with closing(get_db()) as c:
+            c.execute('BEGIN IMMEDIATE')
+            story=c.execute('SELECT * FROM stories WHERE id=?',(story_id,)).fetchone()
+            if not story or story['status']=='dismissed':raise ValueError('Story not available')
+            utc_day=dt.datetime.now(dt.timezone.utc).date().isoformat()
+            daily_used=c.execute('SELECT COUNT(*) FROM ai_requests WHERE date_utc=?',(utc_day,)).fetchone()[0]
+            story_used=c.execute('SELECT COUNT(*) FROM ai_requests WHERE story_id=?',(story_id,)).fetchone()[0]
+            if daily_used>=AI_DAY_LIMIT:raise ValueError('Daily Groq request limit reached')
+            if story_used>=AI_STORY_LIMIT:raise ValueError('This story has reached its AI rewrite limit')
+            nowutc=now()
+            cursor=c.execute('INSERT INTO ai_requests (story_id,started_at,date_utc,status,model) VALUES (?,?,?,?,?)',
+                    (story_id,nowutc,nowutc[:10],'started',ai_writer.MODEL))
+            request_id=cursor.lastrowid
+            c.commit()
+            record=dict(story)
+    try:
+        evidence=ai_writer.fetch_official(record,load_sources(),fetcher=fetcher)
+        article=ai_writer.groq_generate(evidence,caller=caller)
+        draft={'title':article['title'][:145], 'slug':make_slug(article['title']),
+               'summary':article['summary'],'body':article['body'],
+               'category':'Release' if record['kind']=='release' and not record['manual'] else 'Development update',
+               'tags':'DigiByte, DGB, DigiByte Wallet','image_alt':'','focus_x':'50','focus_y':'50',
+               'ai_generated':True,'evidence_url':record['url'],'model':ai_writer.MODEL}
+        with LOCK:
+            with closing(get_db()) as c:
+                c.execute('BEGIN IMMEDIATE')
+                c.execute('INSERT OR REPLACE INTO drafts VALUES (?,?,?)',(story_id,json.dumps(draft,ensure_ascii=False),now()))
+                c.execute("UPDATE stories SET status='drafted' WHERE id=?",(story_id,))
+                c.execute("UPDATE ai_requests SET status='complete' WHERE id=?",(request_id,))
+                c.commit()
+        return draft
+    except Exception:
+        with LOCK:
+            with closing(get_db()) as c:
+                c.execute("UPDATE ai_requests SET status='error' WHERE id=?",(request_id,))
+                c.commit()
+        raise
 
 def dismiss(story_id):
     if not re.fullmatch(r'[0-9a-f]{32}',story_id):raise ValueError('Invalid id')
@@ -322,7 +385,8 @@ class Handler(BaseHTTPRequestHandler):
             st=parse_qs(query).get('id',[''])[0]
             if not re.fullmatch(r'[0-9a-f]{32}',st):return self.respond(400,{'error':'Invalid id'})
             return self.respond(200,{'draft':get_draft(st)})
-        if path=='/api/health':return self.respond(200,{'version':'0.1.0','mode':'review-only','publishing_enabled':False,'automated_social_scraping':False})
+        if path=='/api/health':return self.respond(200,{'version':'0.2.0','mode':'review-only','publishing_enabled':False,'automated_social_scraping':False,'ai_configured':ai_writer.available()})
+        if path=='/api/ai-status':return self.respond(200,dict(ai_usage(),configured=ai_writer.available(),model=ai_writer.MODEL))
         if path=='/api/audit':return self.respond(200,{'results':audit_site(),'checked_at':now()})
         return self.respond(404,{'error':'Not found'})
     def do_POST(self):
@@ -336,11 +400,12 @@ class Handler(BaseHTTPRequestHandler):
             if p=='/api/scan':return self.respond(202,{'started':start_scan()})
             if p=='/api/manual':return self.respond(201,{'story':add_manual(body)})
             if p=='/api/draft':return self.respond(200,{'draft':draft_for(str(body.get('id','')))})
+            if p=='/api/research':return self.respond(200,{'draft':research_story(str(body.get('id','')))})
             if p=='/api/dismiss':
                 dismiss(str(body.get('id','')))
                 return self.respond(200,{'ok':True})
             return self.respond(404,{'error':'Not found'})
-        except (ValueError,TypeError,sqlite3.Error) as e:
+        except (ValueError,TypeError,sqlite3.Error,ai_writer.ResearchError) as e:
             return self.respond(400,{'error':str(e)[:200]})
 
 def background_loop():

@@ -45,3 +45,30 @@ sudo -u dgbnews DGB_ENGINE_STATE=/var/lib/dgb-newsroom-engine python3 /opt/dgb-n
 - Do not copy user-owned social photographs without a license or authorization.
 - The monitor performs no write to public webroot and does not retain third-party images. Private story data is stored only under server state directory.
 - `v0.1` source is intentionally not an API server available to the internet; tunnel access and origin/CSRF rules limit browser requests. Authorized server administrators can still access local services.
+
+## v0.2: Groq-assisted Research & Write
+
+An explicit **Research & Write with Groq** button in the private Story Radar draft dialog
+calls GroqCloud from the **server**, not the Mac. The assistant is given a bounded,
+source-attributed research package. For approved official GitHub URLs, the engine
+reads the public release, commit or pull-request details from GitHub's official API.
+For manual Reddit/X/Facebook leads it only uses the supplied title and note; it
+**does not scrape social platforms** or pretend to have verified their content.
+
+- Default model: `openai/gpt-oss-120b` through Groq's documented HTTPS chat-completions endpoint.
+- Key file: `/etc/dgb-newsroom-engine/groq.key`, owned by `root:dgbnews`, mode `0640`.
+  This key is never committed, sent to the browser, or put on the Mac's disk.
+- Requested articles remain **editorial working drafts** and carry a publisher-blocking
+  verification marker; you must verify, revise and manually publish in the existing
+  separate password-protected Article Editor.
+- AI requests are manual, no background AI API activity. Maximum 8 AI attempts per
+  UTC day and 2 per story. Failed requests also count, to limit unexpected usage.
+- On regeneration, Story Radar's own draft is replaced, but an existing saved
+  Article Editor draft is never edited or published by this engine.
+- Existing published articles, sitemap, public site and faucet are not touched.
+- Optional privacy: enable Zero Data Retention in GroqCloud's Data Controls if available.
+  Otherwise Groq may retain API inputs/outputs according to its policies.
+- The initial API cannot verify all claims automatically; it is a drafting aide,
+  not a fact-checking or autonomous-publication service.
+
+See `AI_SETUP.md` for the install and test path.
