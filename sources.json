@@ -4,5 +4,15 @@
   {"name":"DigiCoinLib releases","url":"https://github.com/sumcoinlabs/digicoinlib/releases.atom","kind":"release"},
   {"name":"DigiByte Core activity","url":"https://github.com/DigiByte-Core/digibyte/commits/develop.atom","kind":"development"},
   {"name":"DigiByte Wallet development","url":"https://github.com/sumcoinlabs/digibyte_flutter/commits/master.atom","kind":"development"},
-  {"name":"DigiCoinLib development","url":"https://github.com/sumcoinlabs/digicoinlib/commits/master.atom","kind":"development"}
+  {"name":"DigiCoinLib development","url":"https://github.com/sumcoinlabs/digicoinlib/commits/master.atom","kind":"development"},
+  {"name":"Bitcoin Core releases","url":"https://github.com/bitcoin/bitcoin/releases.atom","kind":"release"},
+  {"name":"Bitcoin Core development","url":"https://github.com/bitcoin/bitcoin/commits/master.atom","kind":"development"},
+  {"name":"Ethereum Geth releases","url":"https://github.com/ethereum/go-ethereum/releases.atom","kind":"release"},
+  {"name":"Sumcoin Core releases","url":"https://github.com/sumcoinlabs/sumcoin/releases.atom","kind":"release"},
+  {"name":"Sumcoin Core development","url":"https://github.com/sumcoinlabs/sumcoin/commits/main.atom","kind":"development"},
+  {"name":"SumcoinLib releases","url":"https://github.com/sumcoinlabs/sumcoinlib/releases.atom","kind":"release"},
+  {"name":"SumcoinLib development","url":"https://github.com/sumcoinlabs/sumcoinlib/commits/master.atom","kind":"development"},
+  {"name":"CoinDesk headlines","url":"https://www.coindesk.com/arc/outboundfeeds/rss/","kind":"news"},
+  {"name":"Bitcoin Magazine headlines","url":"https://bitcoinmagazine.com/feed","kind":"news"},
+  {"name":"Decrypt headlines","url":"https://decrypt.co/feed","kind":"news"}
 ]

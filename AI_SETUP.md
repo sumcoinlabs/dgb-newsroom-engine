@@ -1,40 +1,11 @@
-# Groq Research & Write — DigiByte Newsroom Engine v0.2
+# GroqCloud setup — Crypto Newsroom Engine v0.3
 
-Your Mac opens the dashboard with the existing SSH tunnel. The service runs on the
-DigiByte VM as the unprivileged user `dgbnews`. AI inference is performed by
-GroqCloud's remote API.
+The existing Groq key stays on the DigiByte VM at `/etc/dgb-newsroom-engine/groq.key`. **Do not enter your key again** to upgrade to v0.3. The research engine sends only bounded source evidence to GroqCloud. All inference occurs remotely; your Mac is not running a model.
 
-## Security
+**Recommended Free project limits for `openai/gpt-oss-120b`:** 2 requests/minute, 8 requests/day, 8,000 tokens/minute, 50,000 tokens/day. The Groq project account must remain on Free; rate controls are not equivalent to billing controls. No paid fallback is configured. Groq may enforce different limits; check the console if calls are refused.
 
-- Enter your Groq API key into the **Mac installer prompt**, not a chat, command
-  argument or GitHub file. The installer sends it once through your existing SSH
-  connection to the server. The script does not save the key on the Mac.
-- The key is stored at `/etc/dgb-newsroom-engine/groq.key`, `root:dgbnews 0640`.
-  Rotate it in GroqCloud if exposed. Protect server root and SSH accounts.
-- Groq may retain inputs and outputs for up to 30 days, unless Zero Data Retention
-  has been enabled for your organization. Review https://console.groq.com/settings/data-controls
-- Nothing in this engine can publish publicly: no write permissions to the webroot.
-- The editor must still verify the original sources and add authorized original images.
+Software caps are 8 total requests/day, 2/story, 2 automatic/day; 50,000 observed tokens/day with a 10,000-token headroom check. Groq's own project limits are still the final safeguard. Errors count toward attempt limits to avoid repeated API retries. Automatic drafting is enabled by default, only for very recent, high-priority **official GitHub release/development** sources. Disable it with the dashboard toggle at any time. All automatic work is private and needs your editorial approval.
 
-## Use
+Original featured art is abstract artwork only. No web photos, screenshots, logos, or other third-party images are downloaded. Verify the final image context; publishing tools create three aspect ratios from the submitted original.
 
-1. Open `DigiByte Newsroom.app` and Story Radar at http://127.0.0.1:8878.
-2. Choose a GitHub release or commit, and click **Create/Open working draft**.
-3. Click **Research & Write with Groq**. This invokes the API once (subject to
-   a daily maximum of 8 requests, 2 per story).
-4. Review the new draft, including evidence and verification checklist.
-5. Click **Send to Article Editor**, inspect it, and **Save draft**. Do **not**
-   publish until it has been independently checked and an appropriate image added.
-
-No API key or API usage comes from your Mac after setup. Public publication remains disabled.
-
-## Check service on VM
-
-```
-systemctl status --no-pager dgb-newsroom-engine
-curl --fail --silent http://127.0.0.1:8770/api/health
-sudo -u dgbnews python3 /opt/dgb-newsroom-engine/engine.py status
-```
-
-The public GitHub source includes no secrets. The private story database stays
-under `/var/lib/dgb-newsroom-engine/` and is preserved on upgrades.
+Corrected or retracted public articles require a future, separate versioned publication management system; do not alter public files manually or claim the research dashboard retracts public content.
