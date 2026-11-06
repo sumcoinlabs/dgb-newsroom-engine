@@ -1,0 +1,8 @@
+[
+  {"name":"DigiByte Core releases","url":"https://github.com/DigiByte-Core/digibyte/releases.atom","kind":"release"},
+  {"name":"DigiByte Wallet releases","url":"https://github.com/sumcoinlabs/digibyte_flutter/releases.atom","kind":"release"},
+  {"name":"DigiCoinLib releases","url":"https://github.com/sumcoinlabs/digicoinlib/releases.atom","kind":"release"},
+  {"name":"DigiByte Core activity","url":"https://github.com/DigiByte-Core/digibyte/commits/develop.atom","kind":"development"},
+  {"name":"DigiByte Wallet development","url":"https://github.com/sumcoinlabs/digibyte_flutter/commits/master.atom","kind":"development"},
+  {"name":"DigiCoinLib development","url":"https://github.com/sumcoinlabs/digicoinlib/commits/master.atom","kind":"development"}
+]
