@@ -166,6 +166,10 @@ def auto_eligible(story,now=None):
     age=age_hours(story,now)
     if story.get('kind') not in ('release','development') or story.get('manual') or story.get('status')!='new':return False
     if age is None or age>72:return False
-    if ROUTINE_RE.search(story.get('title','')):return False
-    if story.get('kind')=='development' and not OFFICIAL_RE.search(story.get('title','')):return False
+    title=(story.get('title') or '')
+    if ROUTINE_RE.search(title):return False
+    # A prerelease or beta is a research lead, not a reason to spend the daily AI quota.
+    if re.search(r'(?i)(?:\bv?\d+(?:\.\d+)*[-.]?(?:alpha|beta|rc|pre)\d*\b|\btestnet[- ]only\b|\bpreview\b|\bprerelease\b)',title):return False
+    if topic(story)=='Crypto':return False
+    if story.get('kind')=='development' and not OFFICIAL_RE.search(title):return False
     return priority(story,now)>=76

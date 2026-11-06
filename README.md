@@ -1,8 +1,18 @@
-# Crypto Newsroom Engine v0.4 — editorial intelligence and source health
+# Crypto Newsroom Engine v0.5 — private editorial control center
 
 Private, server-hosted crypto research desk for the DigiByte Wallet newsroom. **This is not an unattended public publisher.** The Mac app only opens SSH tunnels to the loopback-only VM; it does not have to remain online for monitoring or approved AI draft preparation.
 
-## What v0.4 changes
+## New in v0.5
+
+- **Clean new AI articles:** verification checklists and AI operation notes stay in private `verification` metadata, not the public Markdown. Historical v0.4 AI drafts are displayed cleanly without rewriting stored SQLite rows. New AI drafts require explicit human review in the Article Editor before publishing.
+- **Better free-tier budgeting:** reserve 10,000 tokens per Groq attempt *before* calling the API, including uncertain failures; display conservative committed allowance separately from successfully reported model usage. Up to 8 daily requests, 2 automatic, and 2 per story. These software limits are NOT a billing guarantee: keep GroqCloud on Free and do not enable paid fallback. Responses are bounded to 2,800 completion tokens and 11,000 characters of evidence to reduce per-minute pressure.
+- **Select better stories:** automatically skip prerelease, preview, beta/testnet, routine GitHub maintenance and broad unrelated Crypto-category leads. Official notable releases and security developments remain eligible; the news queue still contains other leads for manual review.
+- **Original topic-aware artwork:** local 1600×1200 images contain topic and story-specific visual headlines, rather than anonymous generic circles. They remain illustrations, not event photos. The editor produces multiple image aspect ratios when manually publishing.
+- **Persistent private editor sessions:** hashed sessions live in a root-only local SQLite file, invalidated when the editor password changes, expiring after 8 hours. The browser still requires an SSH tunnel and password when sessions expire.
+- **Analytics and inventory:** new dashboard includes an honest read-only publication list and optional anonymous aggregate Nginx HTML-request counts by article, if site access logs are present. This is NOT a unique reader count, GA4 page_view event, Search Console impression/click, or AdSense revenue. No visitor identifiers are written to the aggregate. The one-shot report runs hourly through `dgb-newsroom-analytics.timer` when logs are found.
+- **Safety:** existing public pages, saved drafts, and faucet are untouched by the installer. Public publishing is still manually approved. Corrections, scheduled release, retraction, restoration, GA4, Search Console and AdSense integrations are not yet implemented.
+
+## Previous v0.4 foundation
 
 - Expands the configured network from 16 to **35 feeds**, covering DigiByte, DigiDollar, Sumcoin, Bitcoin, Ethereum, Solana and Polkadot development; selected newsletters and crypto journalism. Some feeds may be empty, stale, blocked or unhealthy: the *Source health* panel exposes failures instead of implying every feed is operational.
 - Checks sources concurrently with five bounded workers every 30 minutes, retains source/URL/timestamp, and records per-source scan status, last good response, last feed-entry date, counts and errors in the existing SQLite database.
@@ -27,7 +37,7 @@ Private, server-hosted crypto research desk for the DigiByte Wallet newsroom. **
 - Original Article Editor: password-protected separate service at `127.0.0.1:8769`, tunneled to Mac `http://127.0.0.1:8877/`.
 - Service: `systemctl status --no-pager dgb-newsroom-engine.service`.
 - Health: `curl -s http://127.0.0.1:8770/api/health` and `/api/sources` (only locally via SSH).
-- Tests: `python3 -m unittest discover -s tests -v` (20 tests in v0.4).
+- Tests: `python3 -m unittest discover -s tests -v` (26 tests in v0.5).
 
 ## Source hygiene
 

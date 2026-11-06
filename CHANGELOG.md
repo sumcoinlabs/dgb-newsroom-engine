@@ -13,3 +13,10 @@
 - Add seven regression tests; 20 tests total.
 
 No automatic publication, source scraping, retraction or live-site modifications.
+
+## 0.5.0 — editorial quality and safe control center
+- Separate AI article text from private verification notes; existing drafts are left unchanged.
+- Reserve a conservative token allowance before each Groq attempt; failed attempts retain their reservation.
+- Reject unrelated DigiByte Wallet angles and editorial instructions in new AI copy.
+- Introduce read-only publication inventory and aggregate analytics APIs with honest coverage labels.
+- Improve dashboard review and analytics sections. Public auto-publishing remains OFF.

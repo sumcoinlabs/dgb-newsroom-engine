@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex,nofollow"><title>Crypto Newsroom · Story Radar v0.4</title>
+<meta name="robots" content="noindex,nofollow"><title>Crypto Newsroom · Story Radar v0.5</title>
 <style>
 :root{color-scheme:dark;--bg:#081629;--panel:#102440;--panel2:#132c4a;--edge:#2b4966;--text:#edf6ff;--muted:#a8bfd4;--accent:#5ddce8;--good:#81dbbd;--yellow:#f9ce79;--red:#ffabab}
 *{box-sizing:border-box}body{background:linear-gradient(148deg,#0a203a,var(--bg) 42%);color:var(--text);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;margin:0;min-height:100vh}a{color:#7ce5f1}button,input,textarea{font:inherit}button{border:1px solid #4485a5;border-radius:9px;padding:10px 15px;background:#196183;color:white;cursor:pointer;font-weight:650}button:hover{background:#287e9f}button:disabled{cursor:wait;opacity:.55}.subtle{color:var(--muted)}
@@ -12,7 +12,7 @@ header{border-bottom:1px solid var(--edge);background:#091c32ee;position:sticky;
 
 .enginerow{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:13px 0}.topicpicker{border:1px solid #47657f;background:#152d48;color:#fff;border-radius:8px;padding:9px}.editorialnotice{padding:12px;border-radius:10px;border:1px solid #325672;background:#132b40;font-size:13px;margin-bottom:12px}.artframe{display:flex;gap:15px;align-items:center;margin:14px 0;flex-wrap:wrap}.artframe img{width:220px;max-width:100%;border-radius:11px;border:1px solid #3e5a79;aspect-ratio:4/3;object-fit:cover}.score{color:#8cddc8}.summaryrows{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.summaryrows .panel{margin:0}#preflight{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;color:#c5dcf0;border-radius:10px;max-height:200px;overflow:auto}label.toggle{display:flex;align-items:center;gap:9px}label.toggle input{width:auto;accent-color:#5ddce8}.introsection{margin-bottom:16px}
 
-/* v0.4 editorial desk: polished, responsive, and readable with no external assets */
+/* v0.5 editorial desk: private review and analytics, no external assets */
 :root{--bg:#071321;--panel:#101f33;--panel2:#16293e;--edge:#2b4058;--text:#edf4fb;--muted:#9eb4ca;--accent:#79e8df;--good:#78d4b6;--yellow:#e9bf70}
 body{background:radial-gradient(ellipse at 12% -12%,#153b52 0,transparent 44%),linear-gradient(145deg,#0a1929,#071321 56%);letter-spacing:.004em}
 header{background:#091827ef;backdrop-filter:blur(16px);border-bottom:1px solid #284158}header .wrap{padding:15px 0;max-width:1380px}header strong{font-size:19px;letter-spacing:-.025em}header span{color:#a3bdd0}
@@ -29,13 +29,27 @@ button{background:#176787;border-color:#3385a3;border-radius:10px;font-weight:67
 @media(max-width:860px){.wrap,header .wrap{padding-left:18px;padding-right:18px}.columns{grid-template-columns:1fr}.reviewcards{grid-template-columns:1fr}header .wrap{padding-top:14px;padding-bottom:14px}.stats{gap:10px}}
 @media(max-width:480px){.stats{grid-template-columns:1fr 1fr}.stat:last-child{grid-column:span 2}.hero{padding-top:24px}.stat{padding:16px;min-height:112px}.stat b{font-size:31px}.enginerow{display:grid;grid-template-columns:1fr 1fr}.searchbox{width:100%;grid-column:span 2}.story{padding:16px}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+
+.insights{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;margin:0 0 21px}
+.insights .panel{margin:0;min-width:0}.insightbody{max-height:280px;overflow:auto;font-size:13px}
+.metricrow,.pubrow{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:7px 0;border-bottom:1px solid #294b64}
+.metricrow span,.pubrow a{overflow-wrap:anywhere}.pubrow small{flex-shrink:0;color:var(--muted)}.audience-number{font-size:38px;letter-spacing:-.05em;color:#c5fbf0;font-weight:800}
+.reviewnotes{margin:14px 0;padding:13px;border:1px solid #38617b;border-radius:11px;background:#0c263e}
+.reviewnotes summary{cursor:pointer;color:#a9e9ef}.reviewnotes li{margin:8px 0;color:#c9deec}.reviewnotes p{font-size:12px}
+@media(max-width:900px){.insights{grid-template-columns:1fr}}
 </style></head><body>
 <header><div class="wrap"><div><strong>Crypto Newsroom · Story Radar</strong><span>Bitcoin · DigiByte · Sumcoin · Ethereum · Industry | SSH-only research</span></div><nav><span class="pill">AUTOMATED RESEARCH · HUMAN APPROVAL</span><a href="http://127.0.0.1:8877/login" target="_blank" rel="noopener noreferrer">Open Article Editor ↗</a></nav></div></header>
 <main class="wrap">
-<section class="hero"><div><div class="eyebrow">CRYPTO NEWSROOM ENGINE / v0.4</div><h1>News worth covering. Without the noise.</h1><p class="subtle">A private editorial desk monitoring official development and industry news. Ranked leads, AI-assisted reporting, source health, and a clear approval queue.</p></div><button id="scan">↻ Scan sources now</button></section>
+<section class="hero"><div><div class="eyebrow">CRYPTO NEWSROOM ENGINE / v0.5</div><h1>News worth covering. Without the noise.</h1><p class="subtle">A private editorial desk monitoring official development and industry news. Ranked leads, AI-assisted reporting, source health, and a clear approval queue.</p></div><button id="scan">↻ Scan sources now</button></section>
 <div class="stats"><div class="stat"><span>Fresh leads</span><b id="newcount">—</b><small>Relevant stories from the past 14 days</small></div><div class="stat"><span>Prepared drafts</span><b id="draftcount">—</b><small>Private drafts awaiting editorial review</small></div><div class="stat"><span>Healthy sources</span><b id="healthycount">—</b><small id="sourcecount">of — configured</small></div></div>
 <div class="editorialnotice introsection"><strong>Automated draft preparation:</strong> <label class="toggle" for="autodraft" style="display:inline-flex;margin:4px 10px"><input type="checkbox" id="autodraft"> Enabled (max 2 Groq attempts/day)</label><span id="limits" class="subtle">Loading usage…</span><div class="subtle">Only fresh, high-priority official development leads qualify. News headlines and social links are for discovery and verification. Automatic public publishing is OFF.</div></div>
 <section class="reviewdesk" id="reviewdesk" aria-label="Ready for review"><div class="sectionhead"><div><div class="eyebrow">EDITORIAL DESK</div><h2>Ready for review</h2><p class="subtle">Private AI-assisted reporting. Review every claim before publishing.</p></div><button class="mutedbutton" id="reviewall">View all drafts</button></div><div id="reviewcards" class="reviewcards"></div></section>
+<section class="insights" aria-label="Audience and publishing">
+  <div class="panel analytics"><div class="sectionhead"><div><div class="eyebrow">AUDIENCE</div><h2>Article traffic</h2><p class="subtle">Server-measured HTML requests, not unique people or Google impressions.</p></div><button class="mutedbutton" id="refreshanalytics">Refresh</button></div>
+  <div id="analyticsdata" class="insightbody subtle">Checking whether website statistics are available…</div></div>
+  <div class="panel publications"><div class="sectionhead"><div><div class="eyebrow">PUBLICATION LIBRARY</div><h2>Published stories</h2><p class="subtle">Read-only live inventory. Editing and retraction are not enabled yet.</p></div><button class="mutedbutton" id="refreshpublished">Refresh</button></div>
+  <div id="publisheddata" class="insightbody subtle">Loading published articles…</div></div>
+</section>
 <div class="columns"><section><div class="controls"><h2>Prioritized story queue</h2><div class="enginerow"><label for="search" class="sr-only">Search story headlines</label><input id="search" class="searchbox" type="search" placeholder="Search stories…" aria-label="Search story headlines"><label for="topic" style="display:inline;margin:0">Topic</label><select id="topic" class="topicpicker"><option value="all">All topics</option><option value="DigiByte">DigiByte</option><option value="Bitcoin">Bitcoin</option><option value="Sumcoin">Sumcoin</option><option value="Ethereum">Ethereum</option><option value="Crypto">Industry</option></select><label for="filter" style="display:inline;margin-right:6px">Show</label><select id="filter" style="background:#152d48;color:white;border:1px solid #47657f;border-radius:7px;padding:7px"><option value="active">Fresh and relevant</option><option value="new">New only</option><option value="drafted">Prepared drafts</option><option value="archive">Archive &amp; off-topic</option><option value="dismissed">Dismissed</option></select></div></div><div id="stories" class="cardlist"><div class="empty">Loading source leads…</div></div><div class="statusbar" id="status" role="status"></div></section>
 <aside>
 <div class="panel"><h2>Bring a story to the newsroom</h2><p>Manually add a source you saw on Reddit, X, Facebook, DigiByte.org or GitHub. No scraping occurs.</p><form id="manual"><label for="mtitle">Story or discussion title</label><input id="mtitle" required minlength="10" maxlength="180" placeholder="What happened? (verify the claim)"><label for="murl">Original HTTPS link</label><input id="murl" required type="url" placeholder="https://..."><label for="mnote">Source note (optional)</label><textarea id="mnote" maxlength="1000" placeholder="What should we verify?"></textarea><button type="submit">+ Add source lead</button></form></div>
@@ -47,7 +61,8 @@ button{background:#176787;border-color:#3385a3;border-radius:10px;font-weight:67
 <div class="modalback" id="modalback"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="modaltitle"><div class="sectionhead"><div><div class="eyebrow">SOURCE-LINKED WORKING DRAFT</div><h2 id="modaltitle">Draft ready for review</h2></div><button class="mutedbutton" id="close" aria-label="Close">×</button></div><div class="notice warning">Not a finished, independently verified article. Confirm the source and claims, rewrite the reporting, and add an original image before publishing.</div><div id="draftdetails" class="subtle" style="font-size:12px"></div>
 <div class="artframe"><img id="storyart" alt="Original crypto network illustration" /><div><strong>Original featured artwork</strong><p class="subtle">1600×1200 PNG generated on your server; no web images copied.</p><a id="downloadart" href="#" download="newsroom-artwork.png">Download PNG</a></div></div>
 <div class="enginerow"><button class="mutedbutton" id="checkpreview">Publication metadata &amp; SEO preflight</button></div><div id="preflight" class="editorialnotice" style="display:none"></div>
-<label>Article text and notes</label><textarea id="draftbody" readonly></textarea><div class="buttons"><button class="mutedbutton" id="copy">Copy article text</button> <button id="research">Research &amp; Write with Groq</button><div><button class="mutedbutton" id="download">Download draft JSON</button> <button id="send">Send to Article Editor ↗</button></div></div><p class="notice">Groq makes private working drafts from official evidence. The original graphic is included in the editor handoff. Verify claims and image relevance before publishing. Maximum 8 requests/day, 2 per story, 2 automatic per day.</p><p id="modalstatus" class="statusbar"></p></div></div>
+<label>Article text</label><textarea id="draftbody" readonly></textarea>
+<details class="reviewnotes" id="reviewnotes"><summary><strong>Private fact-check checklist</strong> · not included in article</summary><ul id="verificationlist"></ul><p class="subtle">Check the original linked evidence and release status before approving publication.</p></details><div class="buttons"><button class="mutedbutton" id="copy">Copy article text</button> <button id="research">Research &amp; Write with Groq</button><div><button class="mutedbutton" id="download">Download draft JSON</button> <button id="send">Send to Article Editor ↗</button></div></div><p class="notice">Groq makes private working drafts from official evidence. The original graphic is included in the editor handoff. Verify claims and image relevance before publishing. Maximum 8 requests/day, 2 per story, 2 automatic per day.</p><p id="modalstatus" class="statusbar"></p></div></div>
 <script>
 'use strict';const CSRF='__CSRF_TOKEN__';const $=id=>document.getElementById(id);let STO=[],current=null,currentStoryId=null,editorWindow=null;
 async function req(path,body){const options=body?{method:'POST',headers:{'Content-Type':'application/json','X-Newsroom-CSRF':CSRF},body:JSON.stringify(body)}:{};const response=await fetch(path,options);const v=await response.json();if(!response.ok)throw Error(v.error||'Request failed');return v}
@@ -80,6 +95,13 @@ for(let x of rows){
  const dis=node('button','Dismiss','mutedbutton');dis.onclick=()=>dismiss(x.id);bar.append(dis)
  }c.append(bar);list.append(c)
 }}
+function renderVerification(d){
+  const root=$('verificationlist');root.replaceChildren();
+  const checks=Array.isArray(d.verification)?d.verification:[];
+  for(const item of checks){const li=node('li',String(item));root.append(li)}
+  if(!checks.length)root.append(node('li','Original evidence, dates, claims, release status and image relevance must be checked.'));
+  $('reviewnotes').open=!!checks.length;
+}
 function renderReviews(){const rows=STO.filter(x=>x.status==='drafted').slice(0,4),out=$('reviewcards');out.replaceChildren();
 if(!rows.length){out.append(node('div','No prepared drafts yet. The server scans every 30 minutes; eligible primary-source releases can become AI drafts automatically.','empty'));return}
 for(const x of rows){const c=node('div',null,'reviewcard'),tag=node('div',x.prepared_by_ai?'AI-assisted draft · needs fact check':'Research outline · needs writing','subtle');
@@ -96,10 +118,10 @@ $('scanerrors').textContent=errors?errors+' source(s) have errors. Expand the so
 }
 async function refresh(){try{const d=await req('/api/stories');STO=d.stories;window.__storyCounts=d.counts||{};
 if(d.settings)$('autodraft').checked=!!d.settings.auto_draft;
-if(d.usage)$('limits').textContent='Groq free budget: '+d.usage.daily_used+'/'+d.usage.daily_limit+' requests · '+d.usage.auto_used+'/'+d.usage.auto_limit+' auto drafts · '+d.usage.tokens_used+'/'+d.usage.token_daily_budget+' recorded tokens';
+if(d.usage)$('limits').textContent='Groq limits: '+d.usage.daily_used+'/'+d.usage.daily_limit+' attempts · '+d.usage.auto_used+'/'+d.usage.auto_limit+' automatic · '+(d.usage.tokens_committed??d.usage.tokens_used)+'/'+d.usage.token_daily_budget+' conservatively reserved tokens. Free tier must remain active.';
 renderSourceHealth(d.sources,d.scan);renderReviews();render();if(d.scan.running){status('Source scan in progress…');setTimeout(refresh,3500)}
 }catch(e){status(e.message,true)}}
-async function createDraft(id){try{const d=await req('/api/draft',{id});currentStoryId=id;current=d.draft;$('modaltitle').textContent=current.title;$('draftdetails').textContent=current.summary+' · '+current.category;$('draftbody').value=current.body;$('modalstatus').textContent='';$('preflight').style.display='none';
+async function createDraft(id){try{const d=await req('/api/draft',{id});currentStoryId=id;current=d.draft;$('modaltitle').textContent=current.title;$('draftdetails').textContent=current.summary+' · '+current.category;$('draftbody').value=current.body;renderVerification(current);$('modalstatus').textContent='';$('preflight').style.display='none';
 $('storyart').src='/api/artwork?id='+encodeURIComponent(id);
 $('downloadart').href=$('storyart').src;
 $('downloadart').download=(current.slug||id)+'-original.png';
@@ -137,7 +159,7 @@ $('research').onclick=async()=>{
     $('modaltitle').textContent=current.title;
     $('draftdetails').textContent=current.summary+' · '+current.category+' · AI working draft, human review required';
     $('draftbody').value=current.body;
-    $('preflight').style.display='none';
+    renderVerification(current);$('preflight').style.display='none';
     $('downloadart').download=(current.slug||currentStoryId)+'-original.png';
     $('modalstatus').textContent='AI draft ready. Review every claim, then use Send to Article Editor. Nothing has been published.';
     await refresh();
@@ -181,6 +203,26 @@ window.addEventListener('message',event=>{
     $('modalstatus').textContent=event.data.accepted?'Draft and artwork handed to editor. Verify the facts and click Save draft there.':'Import skipped to protect existing editor work.';
   }
 });
+async function loadAnalytics(){
+  const el=$('analyticsdata');try{
+    const r=await req('/api/analytics');el.replaceChildren();
+    if(!r.configured){el.append(node('p',r.detail||'No measured traffic yet.','subtle'));return}
+    const big=node('div',Number(r.views||0).toLocaleString(),'audience-number');
+    el.append(big,node('p','Estimated requests for newsroom HTML in the last '+r.range_days+' days.','subtle'));
+    for(const x of (r.articles||[]).slice(0,8)){const row=node('div',null,'metricrow');const label=node('span',x.path.replace('/news/','')||'News index');row.append(label,node('strong',Number(x.views).toLocaleString()));el.append(row)}
+    el.append(node('p',r.detail||'','subtle'));
+  }catch(e){el.textContent='Analytics unavailable: '+e.message}
+}
+async function loadPublished(){
+ const el=$('publisheddata');try{
+ const r=await req('/api/publications');el.replaceChildren();
+ if(!r.available){el.textContent='Published article listing unavailable ('+(r.error||'unknown error')+').';return}
+ for(const x of r.entries.slice(0,8)){const row=node('div',null,'pubrow'),a=node('a',x.title||x.url);a.href=x.url;a.target='_blank';a.rel='noopener noreferrer';row.append(a);if(x.published)row.append(node('small',x.published.slice(0,10)));el.append(row)}
+ if(!r.entries.length)el.append(node('p','No published articles reported by the public feed.'));
+ }catch(e){el.textContent='Publication inventory unavailable: '+e.message}
+}
+$('refreshanalytics').onclick=loadAnalytics;$('refreshpublished').onclick=loadPublished;
+loadAnalytics();loadPublished();
 $('audit').onclick=async()=>{const b=$('audit');b.disabled=true;$('auditout').textContent='Checking live pages…';try{const d=await req('/api/audit');const root=$('auditout');root.replaceChildren();for(let r of d.results){const line=node('div',(r.ok?'✓ ':'! ')+r.url.split('/').pop()+' — '+(r.ok?'basic technical checks passed':r.error||'needs review'),r.ok?'ok':'warning');line.style.margin='8px 0';root.append(line)}root.append(node('p','This is a basic HTML audit—not Google indexing or a performance score.'))}catch(e){$('auditout').textContent=e.message}finally{b.disabled=false}};
 refresh();
 </script></body></html>

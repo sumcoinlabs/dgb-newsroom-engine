@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Crypto Newsroom Engine v0.4: multi-crypto source research, private AI review queue.
+"""Crypto Newsroom Engine v0.5: source-checked private editorial desk, private AI review queue.
 
 No automated public publishing, social scraping, image scraping, or credentials.
 Python 3.8+ stdlib only. Runs as unprivileged user on loopback.
@@ -39,7 +39,7 @@ AI_DAY_LIMIT = 8
 AI_STORY_LIMIT = 2
 AUTO_DAILY_LIMIT = 2
 AI_TOKEN_DAILY_LIMIT = 50000
-AI_RESERVE_TOKENS = 10000
+AI_RESERVE_TOKENS = ai_writer.MAX_PER_REQUEST_TOKENS
 AUTO_LOCK = threading.Lock()
 CSRF = secrets.token_hex(24)
 LOCK = threading.RLock()
@@ -112,7 +112,7 @@ def get_db():
       started_at TEXT NOT NULL, date_utc TEXT NOT NULL,
       status TEXT NOT NULL, model TEXT NOT NULL)''')
     existing={row[1] for row in conn.execute('PRAGMA table_info(ai_requests)')}
-    for col,kind in [('actor',"TEXT NOT NULL DEFAULT 'manual'"),('prompt_tokens','INTEGER NOT NULL DEFAULT 0'),('completion_tokens','INTEGER NOT NULL DEFAULT 0')]:
+    for col,kind in [('actor',"TEXT NOT NULL DEFAULT 'manual'"),('prompt_tokens','INTEGER NOT NULL DEFAULT 0'),('completion_tokens','INTEGER NOT NULL DEFAULT 0'),('reserved_tokens','INTEGER NOT NULL DEFAULT 0')]:
         if col not in existing:conn.execute('ALTER TABLE ai_requests ADD COLUMN '+col+' '+kind)
     conn.execute('''CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)''')
     conn.execute('''CREATE TABLE IF NOT EXISTS source_health (
@@ -320,6 +320,28 @@ def make_draft(story):
             'tags':tags,'image_alt':'Original abstract blockchain network artwork for '+topic+' coverage',
             'focus_x':'50','focus_y':'50','body':text}
 
+def normalized_draft(draft):
+    """Render legacy AI drafts without embedded editorial notes; never alter stored SQLite."""
+    if not isinstance(draft,dict) or not draft.get('ai_generated'):
+        return draft
+    body=draft.get('body','')
+    banner='**EDITORIAL WORKING DRAFT — VERIFY BEFORE PUBLISHING.**'
+    boundary='\n\n## Source and verification\n\n'
+    if not body.startswith(banner) or boundary not in body:return draft
+    article,foot=body[len(banner):].split(boundary,1)
+    source=re.search(r'Original source: (\[[^\]]{1,160}\]\(https://github\.com/[^)]+\))',foot)
+    if not source:return draft
+    checks=[]
+    for line in foot.splitlines():
+        if line.startswith('- '):checks.append(line[2:][:240])
+    result=dict(draft)
+    result['body']=article.strip()+'\n\n## Original source\n\n'+source.group(1)
+    result['verification']=checks[:10]
+    result['review_required']=True
+    result['review_confirmed']=False
+    result['legacy_normalized']=True
+    return result
+
 def draft_for(story_id):
     if not re.fullmatch(r'[0-9a-f]{32}',story_id): raise ValueError('Invalid story id')
     with closing(get_db()) as c:
@@ -328,7 +350,7 @@ def draft_for(story_id):
         if story['status']=='dismissed':raise ValueError('Dismissed story')
         stored=c.execute('SELECT content FROM drafts WHERE story_id=?',(story_id,)).fetchone()
         if stored:
-            draft=json.loads(stored['content'])
+            draft=normalized_draft(json.loads(stored['content']))
         else:
             draft=make_draft(dict(story))
             c.execute('INSERT INTO drafts VALUES (?,?,?)',(story_id,json.dumps(draft,ensure_ascii=False),now()))
@@ -339,7 +361,7 @@ def draft_for(story_id):
 def get_draft(story_id):
     with closing(get_db()) as c:
         r=c.execute('SELECT content FROM drafts WHERE story_id=?',(story_id,)).fetchone()
-        return json.loads(r['content']) if r else None
+        return normalized_draft(json.loads(r['content'])) if r else None
 
 def ai_usage(story_id=None):
     day=dt.datetime.now(dt.timezone.utc).date().isoformat()
@@ -348,14 +370,20 @@ def ai_usage(story_id=None):
         by_story=(c.execute('SELECT COUNT(*) FROM ai_requests WHERE story_id=?',(story_id,)).fetchone()[0]
                   if story_id else 0)
         auto_used=c.execute("SELECT COUNT(*) FROM ai_requests WHERE date_utc=? AND actor='auto'",(day,)).fetchone()[0]
-        prompt,completion=c.execute('SELECT COALESCE(SUM(prompt_tokens),0),COALESCE(SUM(completion_tokens),0) FROM ai_requests WHERE date_utc=?',(day,)).fetchone()
+        prompt,completion,committed=c.execute('''SELECT COALESCE(SUM(prompt_tokens),0),COALESCE(SUM(completion_tokens),0),
+             COALESCE(SUM(CASE WHEN status='complete' AND prompt_tokens+completion_tokens>0
+                 THEN MAX(reserved_tokens, prompt_tokens+completion_tokens) ELSE reserved_tokens END),0)
+             FROM ai_requests WHERE date_utc=?''',(day,)).fetchone()
+        uncertain=c.execute("SELECT COUNT(*) FROM ai_requests WHERE date_utc=? AND status!='complete'",(day,)).fetchone()[0]
     return {'daily_used':used,'daily_limit':AI_DAY_LIMIT,'story_used':by_story,'story_limit':AI_STORY_LIMIT,
             'auto_used':auto_used,'auto_limit':AUTO_DAILY_LIMIT,'tokens_used':prompt+completion,
-            'token_daily_budget':AI_TOKEN_DAILY_LIMIT,'prompt_tokens':prompt,'completion_tokens':completion}
+            'tokens_committed':committed, 'unverified_attempts':uncertain,
+            'token_daily_budget':AI_TOKEN_DAILY_LIMIT,'prompt_tokens':prompt,'completion_tokens':completion,
+            'billing_guarantee':False}
 
 
 def research_story(story_id,fetcher=None,caller=None,actor='manual'):
-    """Explicit user-triggered, rate-limited Groq article generation, never publishes."""
+    """Bounded Groq drafting. Every attempt reserves tokens before network I/O; never publishes."""
     if not re.fullmatch(r'[0-9a-f]{32}',story_id):raise ValueError('Invalid id')
     if actor not in ('manual','auto'):raise ValueError('Invalid actor')
     if actor=='auto' and not get_settings()['auto_draft']:raise ValueError('Automatic drafting disabled')
@@ -375,13 +403,15 @@ def research_story(story_id,fetcher=None,caller=None,actor='manual'):
                 if auto_used>=AUTO_DAILY_LIMIT:raise ValueError('Automatic draft limit reached')
                 if story['kind'] not in ('development','release'):
                     raise ValueError('Auto research only accepts official development sources')
-            token_used=c.execute('SELECT COALESCE(SUM(prompt_tokens+completion_tokens),0) FROM ai_requests WHERE date_utc=?',(utc_day,)).fetchone()[0]
+            token_used=c.execute('''SELECT COALESCE(SUM(CASE WHEN status='complete' AND prompt_tokens+completion_tokens>0
+                  THEN MAX(reserved_tokens,prompt_tokens+completion_tokens) ELSE reserved_tokens END),0)
+                  FROM ai_requests WHERE date_utc=?''',(utc_day,)).fetchone()[0]
             if token_used+AI_RESERVE_TOKENS>AI_TOKEN_DAILY_LIMIT:
                 raise ValueError('Groq daily token budget nearly exhausted')
             if story_used>=AI_STORY_LIMIT:raise ValueError('This story has reached its AI rewrite limit')
             nowutc=now()
-            cursor=c.execute('INSERT INTO ai_requests (story_id,started_at,date_utc,status,model,actor) VALUES (?,?,?,?,?,?)',
-                    (story_id,nowutc,nowutc[:10],'started',ai_writer.MODEL,actor))
+            cursor=c.execute('INSERT INTO ai_requests (story_id,started_at,date_utc,status,model,actor,reserved_tokens) VALUES (?,?,?,?,?,?,?)',
+                    (story_id,nowutc,nowutc[:10],'started',ai_writer.MODEL,actor,AI_RESERVE_TOKENS))
             request_id=cursor.lastrowid
             c.commit()
             record=dict(story)
@@ -402,7 +432,8 @@ def research_story(story_id,fetcher=None,caller=None,actor='manual'):
                                   'Ethereum':['Ethereum','ETH','Cryptocurrency']}.get(editorial.topic(record),['Cryptocurrency','Blockchain'])),
                'image_alt':'Original abstract blockchain network artwork for '+editorial.topic(record)+' coverage',
                'focus_x':'50','focus_y':'50',
-               'ai_generated':True,'evidence_url':record['url'],'model':ai_writer.MODEL}
+               'ai_generated':True,'evidence_url':record['url'],'model':ai_writer.MODEL,
+               'verification':article.get('verification',[]),'review_required':True,'review_confirmed':False}
         with LOCK:
             with closing(get_db()) as c:
                 c.execute('BEGIN IMMEDIATE')
@@ -477,7 +508,9 @@ def artwork_bytes(story_id):
     art_dir.mkdir(mode=0o700,exist_ok=True)
     path=art_dir/(story_id+'.png')
     with LOCK:
-        if not path.is_file():
+        # Regenerate only our own older cached abstract artwork when moving to v0.5.
+        outdated=not path.is_file() or b'DGBNewsroom-v0.5' not in path.read_bytes()[:500]
+        if outdated:
             content=artwork.generate(editorial.topic(item),item['title']+item['id'])
             temp=art_dir/(story_id+'.pending.png')
             temp.write_bytes(content)
@@ -494,7 +527,9 @@ def preview_article(story_id):
     canonical='https://www.digibytewallet.org/news/'+draft['slug']+'.html'
     body=draft.get('body','')
     warnings=[]
-    if 'VERIFY BEFORE PUBLISHING' in body:warnings.append('Working-draft verification warning must be resolved')
+    if 'VERIFY BEFORE PUBLISHING' in body:warnings.append('Legacy editorial warning must be removed from article')
+    if draft.get('review_required') and not draft.get('review_confirmed'):
+        warnings.append('Private editorial verification has not been approved')
     if record['kind']=='news':warnings.append('Headline-only third-party report: obtain primary evidence')
     if len(re.findall(r'\w+',body))<220:warnings.append('Article needs deeper original reporting')
     warnings.extend(['Generated illustration must be reviewed for relevance',
@@ -538,6 +573,44 @@ def audit_site():
         except Exception as e:result['error']=type(e).__name__+': '+str(e)[:120]
         output.append(result)
     return output
+
+def published_inventory():
+    """Read-only currently public newsroom articles. No public write operations."""
+    site='https://www.digibytewallet.org/news/feed.json'
+    try:
+        with urlopen(Request(site,headers={'User-Agent':'DGB-Newsroom-ControlCenter/0.5'}),timeout=7) as r:
+            if hostname(r.geturl())!='www.digibytewallet.org':raise ValueError('Unexpected redirect')
+            obj=json.loads(r.read(150000).decode('utf-8'))
+        entries=[]
+        for x in obj.get('items',[])[:60]:
+            url=x.get('url','')
+            if urlparse(url).hostname!='www.digibytewallet.org' or not url.startswith('https://www.digibytewallet.org/news/'):
+                continue
+            entries.append({'title':str(x.get('title') or '')[:150],'url':url,'published':str(x.get('date_published') or '')[:45]})
+        return {'available':True,'entries':entries,'lifecycle':'read-only','public_auto_publish':False}
+    except (OSError,ValueError,KeyError,TimeoutError,TypeError) as e:
+        return {'available':False,'entries':[],'error':type(e).__name__,'lifecycle':'read-only'}
+
+def analytics_report():
+    """Read-only aggregates. No raw visitor IP, cookie or user agent reaches the dashboard."""
+    path=STATE/'traffic-aggregate.json'
+    if not path.is_file():
+        return {'configured':False,'provider':'Nginx access logs','views':None,'articles':[],
+                'detail':'No server log aggregate has been generated. Google Analytics and Search Console are not connected.'}
+    try:
+        data=json.loads(path.read_text('utf-8'))
+        if data.get('schema')!=1 or not isinstance(data.get('articles'),list):raise ValueError('Bad analytics aggregate')
+        if not data.get('logs_processed'):
+            return {'configured':False,'provider':'Nginx access logs','views':None,'articles':[],
+                    'detail':'No readable Nginx access logs found. Configure the site log path before measuring traffic.'}
+        return {'configured':True,'provider':'Nginx access logs','measurement':'Estimated HTML page requests, not unique visitors',
+                'google_analytics_connected':False,'search_console_connected':False,
+                'checked_at':data.get('checked_at'),'range_days':data.get('range_days',30),
+                'views':data.get('views',0),'articles':data.get('articles',[])[:100],
+                'detail':'Counts exclude known bots and non-2xx requests; caching may reduce server-log counts.'}
+    except (ValueError,OSError,TypeError):
+        return {'configured':False,'provider':'Nginx access logs','views':None,'articles':[],
+                'detail':'Analytics aggregate is unreadable; check the hourly aggregation job.'}
 
 class Server(ThreadingHTTPServer):
     daemon_threads=True
@@ -589,7 +662,7 @@ class Handler(BaseHTTPRequestHandler):
             st=parse_qs(query).get('id',[''])[0]
             if not re.fullmatch(r'[0-9a-f]{32}',st):return self.respond(400,{'error':'Invalid id'})
             return self.respond(200,{'draft':get_draft(st)})
-        if path=='/api/health':return self.respond(200,{'version':'0.4.0','mode':'automated-draft-review','publishing_enabled':False,
+        if path=='/api/health':return self.respond(200,{'version':'0.5.0','mode':'automated-draft-review','publishing_enabled':False,
           'automated_social_scraping':False,'ai_configured':ai_writer.available(),'settings':get_settings()})
         if path=='/api/settings':return self.respond(200,{'settings':get_settings(),'usage':ai_usage()})
         if path=='/api/sources':
@@ -607,6 +680,8 @@ class Handler(BaseHTTPRequestHandler):
             try:return self.respond(200,artwork_bytes(story_id),'image/png')
             except ValueError as e:return self.respond(404,{'error':str(e)})
         if path=='/api/ai-status':return self.respond(200,dict(ai_usage(),configured=ai_writer.available(),model=ai_writer.MODEL))
+        if path=='/api/analytics':return self.respond(200,analytics_report())
+        if path=='/api/publications':return self.respond(200,published_inventory())
         if path=='/api/audit':return self.respond(200,{'results':audit_site(),'checked_at':now()})
         return self.respond(404,{'error':'Not found'})
     def do_POST(self):
