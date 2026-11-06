@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex,nofollow"><title>Crypto Newsroom · Story Radar v0.5</title>
+<meta name="robots" content="noindex,nofollow"><title>Crypto Newsroom · Story Radar v0.6</title>
 <style>
 :root{color-scheme:dark;--bg:#081629;--panel:#102440;--panel2:#132c4a;--edge:#2b4966;--text:#edf6ff;--muted:#a8bfd4;--accent:#5ddce8;--good:#81dbbd;--yellow:#f9ce79;--red:#ffabab}
 *{box-sizing:border-box}body{background:linear-gradient(148deg,#0a203a,var(--bg) 42%);color:var(--text);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;margin:0;min-height:100vh}a{color:#7ce5f1}button,input,textarea{font:inherit}button{border:1px solid #4485a5;border-radius:9px;padding:10px 15px;background:#196183;color:white;cursor:pointer;font-weight:650}button:hover{background:#287e9f}button:disabled{cursor:wait;opacity:.55}.subtle{color:var(--muted)}
@@ -40,7 +40,7 @@ button{background:#176787;border-color:#3385a3;border-radius:10px;font-weight:67
 </style></head><body>
 <header><div class="wrap"><div><strong>Crypto Newsroom · Story Radar</strong><span>Bitcoin · DigiByte · Sumcoin · Ethereum · Industry | SSH-only research</span></div><nav><span class="pill">AUTOMATED RESEARCH · HUMAN APPROVAL</span><a href="http://127.0.0.1:8877/login" target="_blank" rel="noopener noreferrer">Open Article Editor ↗</a></nav></div></header>
 <main class="wrap">
-<section class="hero"><div><div class="eyebrow">CRYPTO NEWSROOM ENGINE / v0.5</div><h1>News worth covering. Without the noise.</h1><p class="subtle">A private editorial desk monitoring official development and industry news. Ranked leads, AI-assisted reporting, source health, and a clear approval queue.</p></div><button id="scan">↻ Scan sources now</button></section>
+<section class="hero"><div><div class="eyebrow">CRYPTO NEWSROOM ENGINE / v0.6</div><h1>News worth covering. Without the noise.</h1><p class="subtle">A private editorial desk monitoring official development and industry news. Ranked leads, AI-assisted reporting, source health, and a clear approval queue.</p></div><button id="scan">↻ Scan sources now</button></section>
 <div class="stats"><div class="stat"><span>Fresh leads</span><b id="newcount">—</b><small>Relevant stories from the past 14 days</small></div><div class="stat"><span>Prepared drafts</span><b id="draftcount">—</b><small>Private drafts awaiting editorial review</small></div><div class="stat"><span>Healthy sources</span><b id="healthycount">—</b><small id="sourcecount">of — configured</small></div></div>
 <div class="editorialnotice introsection"><strong>Automated draft preparation:</strong> <label class="toggle" for="autodraft" style="display:inline-flex;margin:4px 10px"><input type="checkbox" id="autodraft"> Enabled (max 2 Groq attempts/day)</label><span id="limits" class="subtle">Loading usage…</span><div class="subtle">Only fresh, high-priority official development leads qualify. News headlines and social links are for discovery and verification. Automatic public publishing is OFF.</div></div>
 <section class="reviewdesk" id="reviewdesk" aria-label="Ready for review"><div class="sectionhead"><div><div class="eyebrow">EDITORIAL DESK</div><h2>Ready for review</h2><p class="subtle">Private AI-assisted reporting. Review every claim before publishing.</p></div><button class="mutedbutton" id="reviewall">View all drafts</button></div><div id="reviewcards" class="reviewcards"></div></section>
@@ -50,6 +50,10 @@ button{background:#176787;border-color:#3385a3;border-radius:10px;font-weight:67
   <div class="panel publications"><div class="sectionhead"><div><div class="eyebrow">PUBLICATION LIBRARY</div><h2>Published stories</h2><p class="subtle">Read-only live inventory. Editing and retraction are not enabled yet.</p></div><button class="mutedbutton" id="refreshpublished">Refresh</button></div>
   <div id="publisheddata" class="insightbody subtle">Loading published articles…</div></div>
 </section>
+<section class="insights" aria-label="Editorial health and integration status">
+ <div class="panel"><div class="sectionhead"><div><div class="eyebrow">QUALITY CONTROL</div><h2>Editorial review &amp; source diagnostics</h2><p>Automated checks are clues, not independent verification of reporting.</p></div><button class="mutedbutton" id="refreshquality">Refresh</button></div><div id="quality-v06" class="insightbody subtle">Analyzing prepared drafts…</div></div>
+ <div class="panel"><div class="sectionhead"><div><div class="eyebrow">MEASUREMENT</div><h2>Google integrations</h2><p>GA4 · Search Console · AdSense (authorized read-only reporting)</p></div><button class="mutedbutton" id="refreshgoogle">Refresh</button></div><div id="google-v06" class="insightbody subtle">Checking account connections…</div></div>
+</section>
 <div class="columns"><section><div class="controls"><h2>Prioritized story queue</h2><div class="enginerow"><label for="search" class="sr-only">Search story headlines</label><input id="search" class="searchbox" type="search" placeholder="Search stories…" aria-label="Search story headlines"><label for="topic" style="display:inline;margin:0">Topic</label><select id="topic" class="topicpicker"><option value="all">All topics</option><option value="DigiByte">DigiByte</option><option value="Bitcoin">Bitcoin</option><option value="Sumcoin">Sumcoin</option><option value="Ethereum">Ethereum</option><option value="Crypto">Industry</option></select><label for="filter" style="display:inline;margin-right:6px">Show</label><select id="filter" style="background:#152d48;color:white;border:1px solid #47657f;border-radius:7px;padding:7px"><option value="active">Fresh and relevant</option><option value="new">New only</option><option value="drafted">Prepared drafts</option><option value="archive">Archive &amp; off-topic</option><option value="dismissed">Dismissed</option></select></div></div><div id="stories" class="cardlist"><div class="empty">Loading source leads…</div></div><div class="statusbar" id="status" role="status"></div></section>
 <aside>
 <div class="panel"><h2>Bring a story to the newsroom</h2><p>Manually add a source you saw on Reddit, X, Facebook, DigiByte.org or GitHub. No scraping occurs.</p><form id="manual"><label for="mtitle">Story or discussion title</label><input id="mtitle" required minlength="10" maxlength="180" placeholder="What happened? (verify the claim)"><label for="murl">Original HTTPS link</label><input id="murl" required type="url" placeholder="https://..."><label for="mnote">Source note (optional)</label><textarea id="mnote" maxlength="1000" placeholder="What should we verify?"></textarea><button type="submit">+ Add source lead</button></form></div>
@@ -57,7 +61,7 @@ button{background:#176787;border-color:#3385a3;border-radius:10px;font-weight:67
 <div class="panel"><div class="sectionhead"><h2>SEO quick audit</h2><button class="mutedbutton" id="audit">Check</button></div><p>Fetches your public newsroom pages and checks basic metadata and schema. Search Console performance requires a separate authorized integration.</p><div id="auditout" style="font-size:12px"></div></div>
 <div class="panel"><div class="sectionhead"><h2>Source health</h2><span class="pill" id="sourcepill">Checking</span></div><p>Feeds are independently checked. Failed or stale feeds are shown instead of counted as healthy.</p><div class="sourcehealth" id="sourceinfo">Loading feeds…</div><p style="margin-top:12px">Last scan: <span id="lastscan">Never</span></p><div id="scanerrors" class="bad" style="font-size:12px"></div></div>
 </aside></div>
-</main><footer class="foot"><div class="wrap">Private newsroom engine · Source code stored in a separate private repository · Public website is not modified by this service</div></footer>
+</main><footer class="foot"><div class="wrap">Private newsroom engine · Source code in a public repository; all API credentials remain server-private · Public website is not modified by this service</div></footer>
 <div class="modalback" id="modalback"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="modaltitle"><div class="sectionhead"><div><div class="eyebrow">SOURCE-LINKED WORKING DRAFT</div><h2 id="modaltitle">Draft ready for review</h2></div><button class="mutedbutton" id="close" aria-label="Close">×</button></div><div class="notice warning">Not a finished, independently verified article. Confirm the source and claims, rewrite the reporting, and add an original image before publishing.</div><div id="draftdetails" class="subtle" style="font-size:12px"></div>
 <div class="artframe"><img id="storyart" alt="Original crypto network illustration" /><div><strong>Original featured artwork</strong><p class="subtle">1600×1200 PNG generated on your server; no web images copied.</p><a id="downloadart" href="#" download="newsroom-artwork.png">Download PNG</a></div></div>
 <div class="enginerow"><button class="mutedbutton" id="checkpreview">Publication metadata &amp; SEO preflight</button></div><div id="preflight" class="editorialnotice" style="display:none"></div>
@@ -225,4 +229,41 @@ $('refreshanalytics').onclick=loadAnalytics;$('refreshpublished').onclick=loadPu
 loadAnalytics();loadPublished();
 $('audit').onclick=async()=>{const b=$('audit');b.disabled=true;$('auditout').textContent='Checking live pages…';try{const d=await req('/api/audit');const root=$('auditout');root.replaceChildren();for(let r of d.results){const line=node('div',(r.ok?'✓ ':'! ')+r.url.split('/').pop()+' — '+(r.ok?'basic technical checks passed':r.error||'needs review'),r.ok?'ok':'warning');line.style.margin='8px 0';root.append(line)}root.append(node('p','This is a basic HTML audit—not Google indexing or a performance score.'))}catch(e){$('auditout').textContent=e.message}finally{b.disabled=false}};
 refresh();
-</script></body></html>
+</script>
+<script>
+/* v0.6 enhancements: read-only diagnostics, DOM-safe rendering, no publishing actions. */
+(()=>{
+ function E(tag,cls,txt){const n=document.createElement(tag);if(cls)n.className=cls;if(txt!==undefined)n.textContent=String(txt);return n}
+ function row(where,title,detail){let d=E('div','metricrow');let label=E('div');label.append(E('strong','',title));label.append(E('small','subtle',detail));d.append(label);where.append(d)}
+ async function get(path){const r=await fetch(path,{cache:'no-store',credentials:'same-origin'});if(!r.ok)throw Error('HTTP '+r.status);return r.json()}
+ async function quality(){const out=document.getElementById('quality-v06');out.replaceChildren();try{
+    const [report,health]=await Promise.all([get('/api/quality'),get('/api/source-audit')]);
+    row(out,'Prepared drafts: '+report.drafts.length,'Checks flag likely issues; they do not certify source accuracy');
+    for(const d of report.drafts.slice(0,10)){
+       let text=(d.blockers.length?'Blockers: '+d.blockers.join('; '):'')+(d.warnings.length?'  Review: '+d.warnings.slice(0,3).join('; '):'  No automatic warnings');
+       row(out,d.status+' · '+(d.title||d.slug),text);
+    }
+    row(out,'Sources requiring attention: '+health.attention.length+' / '+health.total,
+        'Official release feeds can be legitimately quiet; diagnose before replacing.');
+    for(const s of health.attention.slice(0,15))row(out,s.name+' · '+s.status,s.reason+' · '+s.suggestion);
+    row(out,report.inventory_available?'Published article checks: '+report.publications.issues.length+' flagged':'Published feed unavailable',
+        'Read-only feed metadata audit · corrections and retractions remain approval-only future work');
+  }catch(err){out.append(E('p','bad','Diagnostics unavailable: '+err.message))}}
+ async function google(){const out=document.getElementById('google-v06');out.replaceChildren();try{
+    const d=await get('/api/google-metrics');
+    for(const [key,name] of [['ga4','Google Analytics 4'],['gsc','Google Search Console'],['adsense','Google AdSense']]){
+      const a=d[key]||{},desc=a.connected?
+        (key==='ga4'?'Site page views: '+a.site_page_views+' · Active users: '+a.site_active_users:
+        key==='gsc'?'News impressions: '+a.news_impressions+' · Clicks: '+a.news_clicks:
+        'Estimated earnings: '+(a.estimated_earnings===null?'unavailable':a.estimated_earnings)+' '+(a.currency||'')):
+        'Not connected · '+(a.detail||'Owner authorization required');
+      row(out,name+' · '+(a.connected?'Connected':'Not connected'),desc);
+    }
+    row(out,'Reporting mode: read-only','No Google login or credentials are stored in your browser. Data refresh runs on the server.');
+  }catch(err){out.append(E('p','bad','Google reporting unavailable: '+err.message))}}
+ document.getElementById('refreshquality').addEventListener('click',quality);
+ document.getElementById('refreshgoogle').addEventListener('click',google);
+ quality();google();
+})();
+</script>
+</body></html>

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Crypto Newsroom Engine v0.5: source-checked private editorial desk, private AI review queue.
+"""Crypto Newsroom Engine v0.6: source-checked private editorial desk, private AI review queue.
 
 No automated public publishing, social scraping, image scraping, or credentials.
 Python 3.8+ stdlib only. Runs as unprivileged user on loopback.
@@ -8,6 +8,9 @@ import argparse
 import ai_writer
 import editorial
 import artwork
+import artwork_v06
+import newsroom_v06
+import google_metrics_v06
 import datetime as dt
 from contextlib import closing
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -509,9 +512,12 @@ def artwork_bytes(story_id):
     path=art_dir/(story_id+'.png')
     with LOCK:
         # Regenerate only our own older cached abstract artwork when moving to v0.5.
-        outdated=not path.is_file() or b'DGBNewsroom-v0.5' not in path.read_bytes()[:500]
+        advanced=artwork_v06.available()
+        marker=b'DGBNewsroom-v0.6' if advanced else b'DGBNewsroom-v0.5'
+        outdated=not path.is_file() or marker not in path.read_bytes()[:600]
         if outdated:
-            content=artwork.generate(editorial.topic(item),item['title']+item['id'])
+            renderer=artwork_v06.generate if advanced else artwork.generate
+            content=renderer(editorial.topic(item),item['title']+item['id'])
             temp=art_dir/(story_id+'.pending.png')
             temp.write_bytes(content)
             temp.replace(path)
@@ -662,7 +668,7 @@ class Handler(BaseHTTPRequestHandler):
             st=parse_qs(query).get('id',[''])[0]
             if not re.fullmatch(r'[0-9a-f]{32}',st):return self.respond(400,{'error':'Invalid id'})
             return self.respond(200,{'draft':get_draft(st)})
-        if path=='/api/health':return self.respond(200,{'version':'0.5.0','mode':'automated-draft-review','publishing_enabled':False,
+        if path=='/api/health':return self.respond(200,{'version':'0.6.0','mode':'automated-draft-review','publishing_enabled':False,
           'automated_social_scraping':False,'ai_configured':ai_writer.available(),'settings':get_settings()})
         if path=='/api/settings':return self.respond(200,{'settings':get_settings(),'usage':ai_usage()})
         if path=='/api/sources':
@@ -680,6 +686,27 @@ class Handler(BaseHTTPRequestHandler):
             try:return self.respond(200,artwork_bytes(story_id),'image/png')
             except ValueError as e:return self.respond(404,{'error':str(e)})
         if path=='/api/ai-status':return self.respond(200,dict(ai_usage(),configured=ai_writer.available(),model=ai_writer.MODEL))
+        if path=='/api/source-audit':
+            with closing(get_db()) as c:
+                health={r['name']:dict(r) for r in c.execute('SELECT * FROM source_health')}
+            return self.respond(200,newsroom_v06.health_summary(load_sources(),health))
+        if path=='/api/quality':
+            with closing(get_db()) as c:
+                rows=[dict(r) for r in c.execute('''SELECT s.*,d.content FROM drafts d
+                    JOIN stories s ON s.id=d.story_id ORDER BY d.generated_at DESC LIMIT 60''')]
+            inv=published_inventory()
+            pub=inv.get('entries',[]) if inv.get('available') else []
+            reports=[]
+            for row in rows:
+                try:
+                    draft=json.loads(row.pop('content'))
+                    if draft.get('ai_generated'):draft=normalized_draft(draft)
+                    reports.append(newsroom_v06.draft_quality(draft,row,pub))
+                except (ValueError,TypeError):continue
+            return self.respond(200,{'drafts':reports,'publications':newsroom_v06.publication_checks(pub),
+                                    'inventory_available':bool(inv.get('available')),
+                                    'public_auto_publish':False})
+        if path=='/api/google-metrics':return self.respond(200,google_metrics_v06.public_status())
         if path=='/api/analytics':return self.respond(200,analytics_report())
         if path=='/api/publications':return self.respond(200,published_inventory())
         if path=='/api/audit':return self.respond(200,{'results':audit_site(),'checked_at':now()})

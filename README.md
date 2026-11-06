@@ -1,4 +1,4 @@
-# Crypto Newsroom Engine v0.5 — private editorial control center
+# Crypto Newsroom Engine v0.6 — public source, private editorial control center
 
 Private, server-hosted crypto research desk for the DigiByte Wallet newsroom. **This is not an unattended public publisher.** The Mac app only opens SSH tunnels to the loopback-only VM; it does not have to remain online for monitoring or approved AI draft preparation.
 
@@ -31,7 +31,7 @@ Private, server-hosted crypto research desk for the DigiByte Wallet newsroom. **
 
 ## Deployment
 
-- Private repository: `sumcoinlabs/dgb-newsroom-engine`.
+- Public source repository: `sumcoinlabs/dgb-newsroom-engine`. Credentials and drafts remain private on the VM.
 - Server: `/opt/dgb-newsroom-engine`, service account `dgbnews`, persisted state `/var/lib/dgb-newsroom-engine`, secret file `/etc/dgb-newsroom-engine/groq.key`.
 - Loopback-only server: `127.0.0.1:8770`, SSH-tunneled to Mac `http://127.0.0.1:8878/`.
 - Original Article Editor: password-protected separate service at `127.0.0.1:8769`, tunneled to Mac `http://127.0.0.1:8877/`.
