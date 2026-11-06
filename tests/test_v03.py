@@ -66,7 +66,7 @@ class TestVersion03(unittest.TestCase):
         p=engine.preview_article(s['id'])
         self.assertEqual(p['author'],'DigiByte Wallet')
         self.assertEqual(p['publication_date'],'Assigned at publication, not original source timestamp')
-        self.assertIn('Disclose publisher affiliation with Sumcoin',p['warnings'])
+        self.assertFalse(any('Disclose publisher affiliation' in x for x in p['warnings']))
         self.assertFalse(p['public_auto_publish'])
     def test_auto_queue_draft_and_free_budgets(self):
         s=self.record('Sumcoin Core v2.0.1 security release')
@@ -84,7 +84,7 @@ class TestVersion03(unittest.TestCase):
         self.assertEqual(engine.auto_prepare_once(fetcher=fake_fetch,caller=fake_caller)['status'],'no_eligible_story')
         draft=engine.get_draft(s['id'])
         self.assertTrue(draft['ai_generated'])
-        self.assertIn('Publisher disclosure',draft['body'])
+        self.assertNotIn('Publisher disclosure',draft['body'])
         usage=engine.ai_usage()
         self.assertEqual((usage['auto_used'],usage['daily_used'],usage['tokens_used']),(1,1,2200))
         self.assertIn('Sumcoin',draft['tags'])

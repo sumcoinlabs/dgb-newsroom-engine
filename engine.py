@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Crypto Newsroom Engine v0.3: multi-crypto source research, private AI review queue.
+"""Crypto Newsroom Engine v0.4: multi-crypto source research, private AI review queue.
 
 No automated public publishing, social scraping, image scraping, or credentials.
 Python 3.8+ stdlib only. Runs as unprivileged user on loopback.
@@ -10,6 +10,7 @@ import editorial
 import artwork
 import datetime as dt
 from contextlib import closing
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import hashlib
 import html
 from html.parser import HTMLParser
@@ -114,6 +115,11 @@ def get_db():
     for col,kind in [('actor',"TEXT NOT NULL DEFAULT 'manual'"),('prompt_tokens','INTEGER NOT NULL DEFAULT 0'),('completion_tokens','INTEGER NOT NULL DEFAULT 0')]:
         if col not in existing:conn.execute('ALTER TABLE ai_requests ADD COLUMN '+col+' '+kind)
     conn.execute('''CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)''')
+    conn.execute('''CREATE TABLE IF NOT EXISTS source_health (
+       name TEXT PRIMARY KEY, url TEXT NOT NULL, last_checked TEXT,
+       last_success TEXT, last_error TEXT, count INTEGER NOT NULL DEFAULT 0,
+       new_count INTEGER NOT NULL DEFAULT 0, last_entry TEXT,
+       status TEXT NOT NULL DEFAULT 'unchecked')''')
     conn.execute("INSERT OR IGNORE INTO settings VALUES ('auto_draft','true')")
     conn.commit()
     return conn
@@ -139,7 +145,8 @@ def atom_entries(raw, source, kind):
 
 def load_sources():
     result=json.loads(SOURCES.read_text('utf-8'))
-    if not isinstance(result,list) or len(result)>20: raise ValueError('Invalid source configuration')
+    if not isinstance(result,list) or len(result)>50: raise ValueError('Invalid source configuration')
+    if len(set(r.get('name') for r in result if isinstance(r,dict)))!=len(result):raise ValueError('Duplicate source name')
     for row in result:
         if not isinstance(row,dict) or set(row) != {'name','url','kind'} or row['kind'] not in ('release','development','news'):
             raise ValueError('Unsafe source configuration')
@@ -148,37 +155,79 @@ def load_sources():
         elif not trusted_source(row['url']):raise ValueError('Unsafe source configuration')
     return result
 
+class SafeFeedRedirect(__import__('urllib.request',fromlist=['HTTPRedirectHandler']).HTTPRedirectHandler):
+    def redirect_request(self,req,fp,code,msg,headers,newurl):
+        old=hostname(req.full_url);new=hostname(newurl)
+        # Same publisher only; never follow a feed URL to arbitrary domains or private IPs.
+        if old.replace('www.','',1)!=new.replace('www.','',1):
+            raise ValueError('Cross-publisher feed redirect denied')
+        return super().redirect_request(req,fp,code,msg,headers,newurl)
+
 def fetch_feed(url):
-    if not trusted_source(url) and hostname(url) not in editorial.RSS_HOSTS: raise ValueError('Source not allowlisted')
-    req=Request(url,headers={'User-Agent':'DigiByteNewsroomResearch/0.1 (+https://www.digibytewallet.org/news/about.html)','Accept':'application/atom+xml,application/xml;q=0.8'})
-    with urlopen(req,timeout=9) as resp:
-        # Refuse cross-domain redirects and non-200 responses.
-        if not (trusted_source(resp.url) or (hostname(resp.url) in editorial.RSS_HOSTS and hostname(resp.url).replace('www.','',1)==hostname(url).replace('www.','',1))):raise ValueError('Unexpected feed redirect')
+    if not trusted_source(url) and hostname(url) not in editorial.RSS_HOSTS:raise ValueError('Source not allowlisted')
+    req=Request(url,headers={'User-Agent':'DigiByteNewsroomResearch/0.4 (+https://www.digibytewallet.org/news/about.html)','Accept':'application/atom+xml,application/rss+xml,application/xml;q=0.8'})
+    from urllib.request import build_opener
+    with build_opener(SafeFeedRedirect()).open(req,timeout=9) as resp:
+        # Must remain the same allowed publisher even after safe redirect handling.
+        actual=hostname(resp.geturl())
+        if actual.replace('www.','',1)!=hostname(url).replace('www.','',1):raise ValueError('Unexpected feed redirect')
         raw=resp.read(MAX_RSS+1)
     if len(raw)>MAX_RSS:raise ValueError('Feed exceeded size limit')
     return raw
 
+def _source_scan(src,fetcher):
+    # Network and XML work outside SQLite; independent feeds can run concurrently.
+    started=now()
+    try:
+        raw=fetcher(src['url'])
+        parsed=list(editorial.rss_entries(raw,src) if src['kind']=='news' else atom_entries(raw,src['name'],src['kind']))
+        latest=max((e.get('published') or '' for e in parsed),default='')
+        return {'source':src,'started':started,'entries':parsed,'latest':latest,'error':''}
+    except Exception as e:
+        return {'source':src,'started':started,'entries':[],'latest':'','error':type(e).__name__+': '+str(e)[:150]}
+
+def _stale_feed_date(stamp):
+    try:
+        published=dt.datetime.fromisoformat(stamp.replace('Z','+00:00'))
+        return published.tzinfo is not None and (dt.datetime.now(dt.timezone.utc)-published).days>14
+    except (TypeError,ValueError,AttributeError):return True
+
 def scan_once(fetcher=fetch_feed):
     global IS_SCANNING,SCAN_REPORT
     with LOCK:
-        if IS_SCANNING: return {'running':True}
+        if IS_SCANNING:return {'running':True}
         IS_SCANNING=True
         SCAN_REPORT['running']=True
-    new=0; errors=[]
+    new=0;errors=[]
     try:
+        sources=load_sources()
+        # Bounded concurrency avoids 35 x 9-second scans on a small VM.
+        with ThreadPoolExecutor(max_workers=5,thread_name_prefix='feed') as pool:
+            futures=[pool.submit(_source_scan,src,fetcher) for src in sources]
+            results=[future.result() for future in as_completed(futures)]
         with closing(get_db()) as conn:
-            for src in load_sources():
-                try:
-                    raw=fetcher(src['url'])
-                    entries=editorial.rss_entries(raw,src) if src['kind']=='news' else atom_entries(raw,src['name'],src['kind'])
-                    for x in entries:
-                        cur=conn.execute('''INSERT OR IGNORE INTO stories (id,source,kind,title,url,summary,published,first_seen)
-                                VALUES (:id,:source,:kind,:title,:url,:summary,:published,:first_seen)''',dict(x,first_seen=now()))
-                        new += cur.rowcount
-                    conn.commit()
-                except Exception as e:
-                    errors.append(src['name']+': '+type(e).__name__+': '+str(e)[:170])
-            # Cap at 1500 old dismissed leads, never discard active leads.
+            for result in results:
+                src=result['source'];name=src['name'];count=0
+                if result['error']:
+                    errors.append(name+': '+result['error'])
+                else:
+                    for item in result['entries']:
+                        cursor=conn.execute('''INSERT OR IGNORE INTO stories
+                        (id,source,kind,title,url,summary,published,first_seen)
+                        VALUES (:id,:source,:kind,:title,:url,:summary,:published,:first_seen)''',dict(item,first_seen=now()))
+                        count+=cursor.rowcount
+                    new+=count
+                conn.execute('''INSERT INTO source_health (name,url,last_checked,last_success,last_error,count,new_count,last_entry,status)
+                  VALUES (?,?,?,?,?,?,?,?,?) ON CONFLICT(name) DO UPDATE SET
+                   url=excluded.url,last_checked=excluded.last_checked,
+                   last_success=COALESCE(excluded.last_success,source_health.last_success),
+                   last_error=excluded.last_error,count=excluded.count,new_count=excluded.new_count,
+                   last_entry=CASE WHEN excluded.last_entry!='' THEN excluded.last_entry ELSE source_health.last_entry END,
+                   status=excluded.status''',
+                  (name,src['url'],result['started'],result['started'] if not result['error'] else None,
+                   result['error'],len(result['entries']),count,result['latest'],
+                   'error' if result['error'] else 'empty' if not result['entries'] else
+                   'stale' if result['latest'] and _stale_feed_date(result['latest']) else 'ok'))
             conn.execute("DELETE FROM stories WHERE status='dismissed' AND id IN (SELECT id FROM stories WHERE status='dismissed' ORDER BY first_seen DESC LIMIT -1 OFFSET 1500)")
             conn.commit()
     finally:
@@ -206,10 +255,20 @@ def story_list(limit=350):
         return [dict(row) for row in c.execute("SELECT * FROM stories ORDER BY CASE status WHEN 'drafted' THEN 0 WHEN 'new' THEN 1 ELSE 2 END, COALESCE(published,first_seen) DESC LIMIT ?",(limit,))]
 
 def grouped_queue():
-    rows=story_list(450)
+    rows=story_list(1400)
+    # Preserve and expose archived leads instead of pretending old releases are breaking news.
     active=editorial.group_stories([row for row in rows if row['status']!='dismissed'])
     dismissed=editorial.group_stories([row for row in rows if row['status']=='dismissed'])
-    return (active[:160]+dismissed[:30])
+    queue=([r for r in active if not r['archived'] and not r.get('off_topic')][:160]
+           +[r for r in active if r['archived'] or r.get('off_topic')][:80]
+           +dismissed[:30])
+    with closing(get_db()) as c:
+        drafts={row['story_id']:json.loads(row['content']) for row in c.execute('SELECT story_id,content FROM drafts')}
+    for item in queue:
+        draft=drafts.get(item['id'])
+        item['prepared_by_ai']=bool(draft and draft.get('ai_generated'))
+        item['review_status']='AI draft ready' if item['prepared_by_ai'] else 'Research outline' if draft else ''
+    return queue
 
 def get_settings():
     with closing(get_db()) as c:
@@ -333,8 +392,6 @@ def research_story(story_id,fetcher=None,caller=None,actor='manual'):
         evidence['related_feed_leads']=[{'title':r['title'],'url':r['url'],'source':r['source']}
                                          for r in siblings[:3]]
         evidence['newsroom_topic']=editorial.topic(record)
-        if evidence['newsroom_topic']=='Sumcoin':
-            evidence['publisher_disclosure']='The publisher is affiliated with the Sumcoin project; disclose this relationship.'
         article=ai_writer.groq_generate(evidence,caller=caller)
         draft={'title':article['title'][:145], 'slug':make_slug(article['title']),
                'summary':article['summary'],'body':article['body'],
@@ -439,7 +496,6 @@ def preview_article(story_id):
     warnings=[]
     if 'VERIFY BEFORE PUBLISHING' in body:warnings.append('Working-draft verification warning must be resolved')
     if record['kind']=='news':warnings.append('Headline-only third-party report: obtain primary evidence')
-    if editorial.topic(record)=='Sumcoin':warnings.append('Disclose publisher affiliation with Sumcoin')
     if len(re.findall(r'\w+',body))<220:warnings.append('Article needs deeper original reporting')
     warnings.extend(['Generated illustration must be reviewed for relevance',
                      'Verify each sourced claim and confirm publication/release status'])
@@ -520,8 +576,12 @@ class Handler(BaseHTTPRequestHandler):
             with LOCK:info=dict(SCAN_REPORT)
             with closing(get_db()) as c:
                 counts={row['status']:row['total'] for row in c.execute('SELECT status,COUNT(*) AS total FROM stories GROUP BY status')}
+            with closing(get_db()) as c:
+                health={r['name']:dict(r) for r in c.execute('SELECT * FROM source_health')}
+            sources=[dict(name=s['name'],kind=s['kind'],url=s['url'],health=health.get(s['name'])) for s in load_sources()]
+            healthy=sum(1 for s in sources if s['health'] and s['health']['status']=='ok')
             return self.respond(200,{'stories':grouped_queue(),'scan':info,'counts':counts,
-                'sources':[{'name':s['name'],'kind':s['kind']} for s in load_sources()],
+                'sources':sources,'healthy_sources':healthy,
                 'settings':get_settings(),'usage':ai_usage()})
         if path=='/api/draft':
             query=self.path.split('?',1)[-1]
@@ -529,9 +589,14 @@ class Handler(BaseHTTPRequestHandler):
             st=parse_qs(query).get('id',[''])[0]
             if not re.fullmatch(r'[0-9a-f]{32}',st):return self.respond(400,{'error':'Invalid id'})
             return self.respond(200,{'draft':get_draft(st)})
-        if path=='/api/health':return self.respond(200,{'version':'0.3.0','mode':'automated-draft-review','publishing_enabled':False,
+        if path=='/api/health':return self.respond(200,{'version':'0.4.0','mode':'automated-draft-review','publishing_enabled':False,
           'automated_social_scraping':False,'ai_configured':ai_writer.available(),'settings':get_settings()})
         if path=='/api/settings':return self.respond(200,{'settings':get_settings(),'usage':ai_usage()})
+        if path=='/api/sources':
+            with closing(get_db()) as c:
+                health={r['name']:dict(r) for r in c.execute('SELECT * FROM source_health')}
+            return self.respond(200,{'sources':[dict(s,health=health.get(s['name'])) for s in load_sources()],
+                                    'last_scan':SCAN_REPORT.get('last_scan')})
         if path=='/api/preview':
             from urllib.parse import parse_qs
             story_id=parse_qs(urlparse(self.path).query).get('id',[''])[0]

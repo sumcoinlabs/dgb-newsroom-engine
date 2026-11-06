@@ -1,39 +1,42 @@
-# Crypto Newsroom Engine v0.3 — private multi-crypto research & review
+# Crypto Newsroom Engine v0.4 — editorial intelligence and source health
 
-Running exclusively on the existing DigiByte VM as unprivileged `dgbnews`, with GroqCloud API processing. Your Mac is a browser control surface only. No new domain, no public admin endpoint, no auto publishing.
+Private, server-hosted crypto research desk for the DigiByte Wallet newsroom. **This is not an unattended public publisher.** The Mac app only opens SSH tunnels to the loopback-only VM; it does not have to remain online for monitoring or approved AI draft preparation.
 
-## Installed capabilities
+## What v0.4 changes
 
-- Six existing DigiByte sources plus public Bitcoin Core, Ethereum Geth, Sumcoin Core/SumcoinLib GitHub sources, and selected crypto-publication RSS headline feeds (16 feeds total; the source configuration is the authority).
-- Half-hourly RSS/Atom ingestion, persistent deduplication, topic classification, priority heuristics, and grouping of likely-related stories. These are **editorial signals, not proof of accuracy**.
-- Automatic private Groq drafting for up to two eligible, recent, high-priority **first-party GitHub** items per UTC day; no AI calls for third-party RSS or manual social links. Always keeps the human-triggered Research & Write option.
-- Hard software limits: 8 total Groq attempts/day; 2 attempts/story; 2 background attempts/day; 50,000 observed tokens/day with 10,000 token reservation before each call. The Groq Free account and project limits must also remain set; software alone cannot guarantee a zero-cost bill if you upgrade to paid billing.
-- Isolated server-side generation of original abstract artwork (1600×1200 PNG), preview/download and automatic handoff to the private Article Editor. Generated art is **illustration**, not a screenshot or documentation of an event.
-- Publication preflight: preliminary author/byline, publication-date policy, source timestamp, estimated word count, canonical, `NewsArticle` JSON-LD preview, and verification warnings. Actual publishing metadata remains owned by the existing article publisher.
-- A private review queue, manual source intake, current daily Groq usage, topic filter, toggle for automatic research, basic live SEO check, private source links, and working-draft export.
-- **No public site publication, deployment or retraction permissions** in this research engine. Article Editor still requires its password, explicit image review, manual save and publish approval.
+- Expands the configured network from 16 to **35 feeds**, covering DigiByte, DigiDollar, Sumcoin, Bitcoin, Ethereum, Solana and Polkadot development; selected newsletters and crypto journalism. Some feeds may be empty, stale, blocked or unhealthy: the *Source health* panel exposes failures instead of implying every feed is operational.
+- Checks sources concurrently with five bounded workers every 30 minutes, retains source/URL/timestamp, and records per-source scan status, last good response, last feed-entry date, counts and errors in the existing SQLite database.
+- Separates newsworthy leads from older and off-topic material; adds a searchable archive, more careful topic attribution independent of publisher names, improved time-based priority, and cross-publisher grouping.
+- Adds a polished private editorial dashboard: Ready for Review, fresh lead filters, topical search, 35-source health monitor, compact grouped story cards, and Groq request/token usage display.
+- Keeps automatic research *enabled only if configured*: at most two fresh high-priority **official development** articles per UTC day; maximum eight Groq calls/day and 50,000 recorded tokens/day. Requests are only made from the server using its existing Groq key. No secondary paid model or silent billing fallback.
+- Preserves existing private story DB, previous AI drafts, article editor draft records, article images, and public website. Removes the hard-coded Sumcoin-specific disclosure prompt; source attribution, truthful reporting, and editorial review remain required for all subjects.
+- Maintains the preflight preview for publication metadata, original abstract image handoff, and GitHub-first manual publisher.
 
-## Editorial safety
+## What v0.4 does NOT do
 
-Do **not** publish unverified AI text. Auto-generated work retains `EDITORIAL WORKING DRAFT — VERIFY BEFORE PUBLISHING`, which the Article Editor refuses to publish. Confirm the claims, status, sourcing, dates and release-specific assertions before rewriting/removing the warning. A GitHub commit or pull request is not an official shipped release. Article source dates are *not* the newsroom's publication date.
+- Does not automatically publish, edit, correct, retract or restore live articles. Those are separate high-risk publisher operations and are not represented as completed.
+- Does not scrape, copy, or republish full articles or copyrighted photographs from third-party news websites.
+- Does not automatically crawl social media platforms; users may still manually record allowed social links.
+- Does not independently verify every AI-written claim, guarantee SEO placement, operate AdSense accounts, or provide definitive finance advice.
 
-Third-party RSS feeds give discovery headlines/snippets only; this engine never scrapes those articles, social feeds or photographs for republication. Facebook, X and Reddit are manual links only until their authorized integrations are built. Neither SEO markup nor images guarantee Google News / Discover placement or monetization.
+## Deployment
 
-**Sumcoin disclosure:** The publisher is affiliated with Sumcoin. The AI prompt and generated Sumcoin drafts include a disclosure; preflight reminds you to preserve it on publication. No unsupported investment claims.
+- Private repository: `sumcoinlabs/dgb-newsroom-engine`.
+- Server: `/opt/dgb-newsroom-engine`, service account `dgbnews`, persisted state `/var/lib/dgb-newsroom-engine`, secret file `/etc/dgb-newsroom-engine/groq.key`.
+- Loopback-only server: `127.0.0.1:8770`, SSH-tunneled to Mac `http://127.0.0.1:8878/`.
+- Original Article Editor: password-protected separate service at `127.0.0.1:8769`, tunneled to Mac `http://127.0.0.1:8877/`.
+- Service: `systemctl status --no-pager dgb-newsroom-engine.service`.
+- Health: `curl -s http://127.0.0.1:8770/api/health` and `/api/sources` (only locally via SSH).
+- Tests: `python3 -m unittest discover -s tests -v` (20 tests in v0.4).
 
-## Architecture and commands
+## Source hygiene
 
-- Private repository `sumcoinlabs/dgb-newsroom-engine` (GitHub).
-- Source `/opt/dgb-newsroom-engine`, state SQLite & artwork `/var/lib/dgb-newsroom-engine`, Groq secret `/etc/dgb-newsroom-engine/groq.key` (root:dgbnews 0640).
-- `dgb-newsroom-engine.service` listens only on `127.0.0.1:8770`; SSH to your Mac's `http://127.0.0.1:8878/`.
-- Article Editor is the separate password-protected `http://127.0.0.1:8877/` service; original drafts and original images are unchanged unless explicitly saved.
-- Mac app `DigiByte Newsroom.app` continues to open both local SSH tunnels.
-- Server checks: `systemctl status --no-pager dgb-newsroom-engine` and `curl -s http://127.0.0.1:8770/api/health`.
-- Tests: `python3 -m unittest discover -s tests -v`.
+Feed URLs are explicit allowlisted HTTPS endpoints. The feed fetcher enforces same-publisher redirects, prohibits numeric IP hosts, caps response bytes and rejects XML DTD/entities. Only source headlines/excerpts/dates are read from public news sites. Source failures are isolated and recorded; previously collected leads remain intact. Generated content is an editorial working draft and must be reviewed before public publishing.
 
-## Remaining roadmap — not shipped in v0.3
+## Next safe milestones
 
-- Authorized social API monitoring, original independent reporting from multiple corroborated primary sources, fact-checking beyond source-bound warnings.
-- Full article edit/correct/retract/restore in the password-protected publisher (these require reviewed GitHub-first state reconciliation, feed/sitemap changes, proper HTTP status and rollback testing).
-- Verified AdSense slot configuration/analytics, Search Console data integration, richer content images and a real visual rendered-page preview.
-- Optional unattended **public** publishing, only after a separate security and editorial review. It is permanently disabled in this version.
+1. Validate each source's real-world health and freshness on the live VM. Drop or replace those that fail consistently.
+2. Complete the full manual editorial review of an automatically generated story and its art handoff to the editor.
+3. Implement GitHub-first post-publication correction/retraction/restoration in a separately permissioned, tested root-owned publishing service, with explicit user confirmation and robust feed/sitemap updates.
+4. Add authorized market/social trend integrations and official regulator data where permission/feeds allow, plus an integrated Search Console and AdSense reporting view.
+5. Consider optional auto-publication only after reliable evidence verification, full rollback testing and user consent.
