@@ -148,24 +148,60 @@ def similar(a,b):
     return False
 
 def group_stories(rows,now=None):
+    """Group candidate matches using cached features and an inverted title index.
+
+    The public `similar` rule remains unchanged. Candidate retrieval is sound:
+    a match requires at least one shared non-stopword or an identical version.
+    Earlier groups win exactly as in the original linear-search implementation.
+    """
     ordered=sorted(rows,key=lambda r:(r.get('status')=='drafted',priority(r,now),r.get('published') or ''),reverse=True)
     groups=[]
-    # Similarity cannot match across topics. Compare only within each topic
-    # rather than across every prior story in the entire queue.
-    groups_by_topic={}
+    features=[]  # (word tokens, version tokens, age hours, lowercase title)
+    # Each topic has its own word/version -> group-position index.
+    by_topic={}
     for item in ordered:
-        entry=dict(item);entry['topic']=topic(entry);entry['priority']=priority(entry,now)
-        entry['related_sources']=[];entry['archived']=archive(entry,now)
+        entry=dict(item)
+        label=topic(entry)
+        entry['topic']=label
+        entry['priority']=priority(entry,now)
+        entry['related_sources']=[]
+        entry['archived']=archive(entry,now)
         if not relevant(entry):entry['off_topic']=True
-        peers=groups_by_topic.setdefault(entry['topic'],[])
+        words,versions=tokens(entry.get('title',''))
+        age=age_hours(entry)
+        title_lower=entry['title'].lower()
+        bucket=by_topic.setdefault(label,{'words':{},'versions':{}})
+        possible=set()
+        for word in words: possible.update(bucket['words'].get(word,()))
+        for version in versions: possible.update(bucket['versions'].get(version,()))
         match=None
-        for target in peers:
-            if similar(entry,target):match=target;break
-        if match:
-            match['related_sources'].append({'id':entry['id'],'title':entry['title'],'url':entry['url'],'source':entry['source']})
+        for position in sorted(possible):
+            target=groups[position]
+            other_words,other_versions,other_age,other_title=features[position]
+            if versions and other_versions and versions.intersection(other_versions):
+                match=target;break
+            if len(words)<2 or len(other_words)<2:continue
+            common=words.intersection(other_words)
+            overlap=len(common)/max(1,len(words.union(other_words)))
+            if overlap>=.55:
+                match=target;break
+            if overlap>=.33 and SequenceMatcher(None,title_lower,other_title).ratio()>.69:
+                match=target;break
+            if (entry.get('source')!=target.get('source') and overlap>=.22
+                and len(common)>=2 and age is not None and other_age is not None
+                and abs(age-other_age)<=72
+                and any(word in common for word in ('zcash','nu7','hack','breach',
+                    'upgrade','sec','coinbase','binance','solana'))):
+                match=target;break
+        if match is not None:
+            match['related_sources'].append({'id':entry['id'],'title':entry['title'],
+                                             'url':entry['url'],'source':entry['source']})
         else:
+            position=len(groups)
             groups.append(entry)
-            peers.append(entry)
+            features.append((words,versions,age,title_lower))
+            for word in words:bucket['words'].setdefault(word,[]).append(position)
+            for version in versions:bucket['versions'].setdefault(version,[]).append(position)
     return groups
 
 def auto_eligible(story,now=None):

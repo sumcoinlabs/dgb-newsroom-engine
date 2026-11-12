@@ -670,7 +670,7 @@ class Handler(BaseHTTPRequestHandler):
             st=parse_qs(query).get('id',[''])[0]
             if not re.fullmatch(r'[0-9a-f]{32}',st):return self.respond(400,{'error':'Invalid id'})
             return self.respond(200,{'draft':get_draft(st)})
-        if path=='/api/health':return self.respond(200,{'version':'0.6.2','mode':'automated-draft-review','publishing_enabled':False,
+        if path=='/api/health':return self.respond(200,{'version':'0.6.3','mode':'automated-draft-review','publishing_enabled':False,
           'automated_social_scraping':False,'ai_configured':ai_writer.available(),'settings':get_settings()})
         if path=='/api/settings':return self.respond(200,{'settings':get_settings(),'usage':ai_usage()})
         if path=='/api/sources':
