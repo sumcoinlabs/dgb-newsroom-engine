@@ -258,7 +258,9 @@ def story_list(limit=350):
         return [dict(row) for row in c.execute("SELECT * FROM stories ORDER BY CASE status WHEN 'drafted' THEN 0 WHEN 'new' THEN 1 ELSE 2 END, COALESCE(published,first_seen) DESC LIMIT ?",(limit,))]
 
 def grouped_queue():
-    rows=story_list(1400)
+    # Bound expensive fuzzy duplicate grouping during each API request.
+    # Drafts rank first; the UI still exposes fresh leads and a recent archive.
+    rows=story_list(400)
     # Preserve and expose archived leads instead of pretending old releases are breaking news.
     active=editorial.group_stories([row for row in rows if row['status']!='dismissed'])
     dismissed=editorial.group_stories([row for row in rows if row['status']=='dismissed'])
@@ -668,7 +670,7 @@ class Handler(BaseHTTPRequestHandler):
             st=parse_qs(query).get('id',[''])[0]
             if not re.fullmatch(r'[0-9a-f]{32}',st):return self.respond(400,{'error':'Invalid id'})
             return self.respond(200,{'draft':get_draft(st)})
-        if path=='/api/health':return self.respond(200,{'version':'0.6.0','mode':'automated-draft-review','publishing_enabled':False,
+        if path=='/api/health':return self.respond(200,{'version':'0.6.2','mode':'automated-draft-review','publishing_enabled':False,
           'automated_social_scraping':False,'ai_configured':ai_writer.available(),'settings':get_settings()})
         if path=='/api/settings':return self.respond(200,{'settings':get_settings(),'usage':ai_usage()})
         if path=='/api/sources':

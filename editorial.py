@@ -150,16 +150,22 @@ def similar(a,b):
 def group_stories(rows,now=None):
     ordered=sorted(rows,key=lambda r:(r.get('status')=='drafted',priority(r,now),r.get('published') or ''),reverse=True)
     groups=[]
+    # Similarity cannot match across topics. Compare only within each topic
+    # rather than across every prior story in the entire queue.
+    groups_by_topic={}
     for item in ordered:
         entry=dict(item);entry['topic']=topic(entry);entry['priority']=priority(entry,now)
         entry['related_sources']=[];entry['archived']=archive(entry,now)
         if not relevant(entry):entry['off_topic']=True
+        peers=groups_by_topic.setdefault(entry['topic'],[])
         match=None
-        for target in groups:
+        for target in peers:
             if similar(entry,target):match=target;break
         if match:
             match['related_sources'].append({'id':entry['id'],'title':entry['title'],'url':entry['url'],'source':entry['source']})
-        else:groups.append(entry)
+        else:
+            groups.append(entry)
+            peers.append(entry)
     return groups
 
 def auto_eligible(story,now=None):
