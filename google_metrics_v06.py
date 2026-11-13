@@ -81,7 +81,8 @@ def gsc(token,site):
             'news_impressions':int(row.get('impressions') or 0),
             'news_ctr':round(float(row.get('ctr') or 0)*100,2),
             'news_avg_position':round(float(row.get('position') or 0),2),
-            'notes':'Search Console data lags and is not real-time.'}
+            'notes':'Search Console data lags and is not real-time.',
+            'sitemaps':gsc_sitemap_rows(token,site)}
 
 def adsense(token,account):
     if not re.fullmatch(r'accounts/pub-\d{10,30}',str(account)):
@@ -100,9 +101,79 @@ def adsense(token,account):
             'currency':data.get('metadata',{}).get('currencyCode',''),
             'scope':'Account-wide, not a per-article DigiByteWallet.org revenue attribution'}
 
+
+# DGB_RADAR_LOCAL_DISCOVERY_V1: strictly read-only public-file audit.
+def discovery_status():
+    import xml.etree.ElementTree as ET
+    from urllib.parse import urlsplit
+    site=Path(os.environ.get('DGB_NEWS_LIVE','/var/www/digibytewallet-org'))
+    base='https://www.digibytewallet.org'
+    result={'valid':False,'last_checked':dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds'),
+            'source':'Live website files (not Google crawl data)'}
+    try:
+        sm=ET.parse(site/'sitemap.xml').getroot()
+        nm=ET.parse(site/'news-sitemap.xml').getroot()
+        ns='http://www.sitemaps.org/schemas/sitemap/0.9'
+        news='http://www.google.com/schemas/sitemap-news/0.9'
+        if sm.tag!='{%s}urlset'%ns or nm.tag!='{%s}urlset'%ns:
+            raise ValueError('Invalid sitemap root tag')
+        urls=[]
+        for row in sm.findall('{%s}url'%ns):
+            url=row.findtext('{%s}loc'%ns)
+            if not url or not url.startswith(base+'/') or urlsplit(url).netloc!='www.digibytewallet.org':
+                raise ValueError('Invalid main sitemap URL')
+            urls.append(url)
+        if len(urls)!=len(set(urls)):
+            raise ValueError('Duplicate URL in main sitemap')
+        feed=json.loads((site/'news/feed.json').read_text('utf-8'))
+        published=[x.get('url','') for x in feed.get('items',[])]
+        missing=[x for x in published if x not in urls]
+        news_urls=[]
+        for row in nm.findall('{%s}url'%ns):
+            loc=row.findtext('{%s}loc'%ns)
+            required=[row.findtext('{%s}news/{%s}publication/{%s}name'%(news,news,news)),
+                      row.findtext('{%s}news/{%s}publication/{%s}language'%(news,news,news)),
+                      row.findtext('{%s}news/{%s}publication_date'%(news,news)),
+                      row.findtext('{%s}news/{%s}title'%(news,news))]
+            if not loc or loc not in urls or not all(required):
+                raise ValueError('Google News sitemap entry missing URL or required tags')
+            news_urls.append(loc)
+        if len(news_urls)!=len(set(news_urls)):
+            raise ValueError('Duplicate URL in Google News sitemap')
+        robots=(site/'robots.txt').read_text('utf-8')
+        robots_ok=all(('Sitemap: '+base+'/'+name) in robots
+                      for name in ('sitemap.xml','news-sitemap.xml'))
+        result.update({'valid':not missing and robots_ok,'main_urls':len(urls),
+                       'news_urls':len(news_urls),'published_articles':len(published),
+                       'missing_count':len(missing),'robots_ok':robots_ok})
+    except (OSError,ValueError,TypeError,KeyError,ET.ParseError) as exc:
+        result['error']=type(exc).__name__+': '+str(exc)[:160]
+    return result
+
+# Read Search Console's *submitted* sitemap report when account owner authorizes it.
+def gsc_sitemap_rows(token,site):
+    try:
+        url='https://www.googleapis.com/webmasters/v3/sites/'+quote(site,safe='')+'/sitemaps'
+        data=_json_request(url,token)
+        rows=[]
+        for record in data.get('sitemap',[]):
+            path=record.get('path','')
+            if path not in ('https://www.digibytewallet.org/sitemap.xml',
+                            'https://www.digibytewallet.org/news-sitemap.xml'):
+                continue
+            rows.append({'path':path,'last_downloaded':record.get('lastDownloaded'),
+                         'submitted':record.get('lastSubmitted'),
+                         'pending':bool(record.get('isPending',False)),
+                         'errors':int(record.get('errors',0)),
+                         'warnings':int(record.get('warnings',0)),
+                         'discovered':sum(int(x.get('submitted',0)) for x in record.get('contents',[]))})
+        return rows
+    except (HTTPError,URLError,OSError,ValueError,TypeError,KeyError):
+        return []
+
 def public_status():
     base={'ga4':{'connected':False},'gsc':{'connected':False},'adsense':{'connected':False},
-          'last_checked':None,'mode':'read-only','credentials_exposed':False}
+          'last_checked':None,'mode':'read-only','credentials_exposed':False,'discovery':discovery_status()}
     try:
         obj=json.loads(OUTPUT.read_text())
         if not isinstance(obj,dict) or obj.get('schema')!=6:return base

@@ -77,6 +77,25 @@ button{background:#176fbb;color:white;border:1px solid #176fbb;border-radius:10p
 .statusbar{color:#255b83}.bad{color:#b43e46}.ok{color:#087953}.foot{display:none}
 @media(max-width:900px){.reviewcards{grid-template-columns:1fr}.columns{grid-template-columns:1fr}.radar-appbar .wrap{padding:13px 16px}.radar-workspace{padding:16px 14px 55px}.radar-private{display:none}}
 @media(max-width:600px){.radar-intro{display:block}.radar-pub-pill{display:inline-block;margin-top:14px}.radar-tabs{gap:0}.radar-tab{flex:1;padding:12px 6px!important;font-size:12px!important}.radar-brand small{display:none}.radar-brand strong{font-size:15px}}
+
+/* DGB_RADAR_CONTRAST_AND_DISCOVERY_V1: accessible colors on white surfaces */
+.radar-workspace a, .radar-workspace .pubrow a, .radar-workspace .metricrow a,
+.radar-workspace .story .source a, .radar-workspace .reviewcards a {
+  color:#104e85!important;text-decoration:underline;text-underline-offset:2px;
+  text-decoration-thickness:1px;font-weight:650;
+}
+.radar-workspace a:hover {color:#06325a!important;text-decoration-thickness:2px}
+.radar-workspace .audience-number {color:#153d6d!important}
+.radar-workspace .eyebrow {color:#174b80!important}
+.radar-workspace .ok {color:#13653e!important}
+.radar-workspace .subtle {color:#53667b!important}
+.radar-workspace .metricrow strong {color:#152e4c}
+#google-v06 .metricrow{display:block!important;padding:12px 0;line-height:1.45}
+#google-v06 .metricrow strong{display:block;color:#163d66}
+#google-v06 .metricrow small{display:block;margin-top:3px;color:#435970!important;
+  white-space:normal;overflow-wrap:anywhere}
+#breaking-performance .metricrow a {color:#104e85!important}
+
 </style></head><body>
 <header class="radar-appbar"><div class="wrap"><div class="radar-brand"><span class="radar-mark" aria-hidden="true">D</span><div><strong>DigiByte Wallet <span class="radar-brand-muted">/ Story Radar</span></strong><small>Private news discovery · human-approved publishing</small></div></div><nav><span class="radar-private">Private workspace</span><a class="radar-studio-link" href="http://127.0.0.1:8877/" target="_blank" rel="noopener noreferrer">Open Publishing Studio ↗</a></nav></div></header>
 <main class="wrap radar-workspace"><div class="radar-tabs" role="tablist" aria-label="Newsroom views">
@@ -316,6 +335,23 @@ refresh();
         'Estimated earnings: '+(a.estimated_earnings===null?'unavailable':a.estimated_earnings)+' '+(a.currency||'')):
         'Not connected · '+(a.detail||'Owner authorization required');
       row(out,name+' · '+(a.connected?'Connected':'Not connected'),desc);
+    }
+
+    const local=d.discovery||{};
+    const detail=local.valid?
+      'Main sitemap: '+local.main_urls+' URLs · Google News: '+local.news_urls+
+      ' recent URLs · Published articles: '+local.published_articles+' · robots.txt: verified':
+      (local.error||'Check missing articles or robots.txt sitemap declarations');
+    row(out,'Local sitemap + feed audit · '+(local.valid?'PASS':'Attention'),detail);
+    if(d.gsc&&d.gsc.connected){
+      const entries=d.gsc.sitemaps||[];
+      for(const name of ['sitemap.xml','news-sitemap.xml']){
+        const item=entries.find(x=>x.path==='https://www.digibytewallet.org/'+name);
+        if(!item){row(out,'Google sitemap: '+name,'Not listed in the Search Console API property. The local file may still be discoverable through robots.txt.');continue;}
+        row(out,'Google sitemap: '+name,
+          (item.pending?'Processing':'Last read: '+(item.last_downloaded||'not reported'))+
+          ' · Discovered: '+item.discovered+' · Errors: '+item.errors+' · Warnings: '+item.warnings);
+      }
     }
     row(out,'Reporting mode: read-only','No Google login or credentials are stored in your browser. Data refresh runs on the server.');
   }catch(err){out.append(E('p','bad','Google reporting unavailable: '+err.message))}}
