@@ -37,36 +37,48 @@ button{background:#176787;border-color:#3385a3;border-radius:10px;font-weight:67
 .reviewnotes{margin:14px 0;padding:13px;border:1px solid #38617b;border-radius:11px;background:#0c263e}
 .reviewnotes summary{cursor:pointer;color:#a9e9ef}.reviewnotes li{margin:8px 0;color:#c9deec}.reviewnotes p{font-size:12px}
 @media(max-width:900px){.insights{grid-template-columns:1fr}}
+/* v0.7: publishing-first editorial flow; diagnostics remain available */
+.flowbanner{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:9px;margin:8px 0 22px;padding:18px 21px;border:1px solid #3c698b;border-radius:14px;background:#0d2d46;color:#effbff}
+.flowbanner strong{font-size:12px;letter-spacing:.045em}.flowbanner span{color:#5bbfe4}
+.diag-drawer{border:1px solid #2a4e69;border-radius:14px;background:#0c2236;margin:18px 0 26px;padding:12px 18px}
+.diag-drawer>summary{cursor:pointer;font-size:15px;font-weight:750;padding:7px;color:#c4e9f9}
+.diag-drawer .insights{margin-top:14px}.story>p{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;max-height:5.2em}
+.modal #copy,.modal #download,.modal #checkpreview{display:none}
+.reviewdesk{border:1px solid #447697;padding:22px;border-radius:18px;background:#0d2941}
+@media(max-width:680px){.flowbanner{justify-content:flex-start}.flowbanner span{display:none}}
 </style></head><body>
-<header><div class="wrap"><div><strong>Crypto Newsroom · Story Radar</strong><span>Bitcoin · DigiByte · Sumcoin · Ethereum · Industry | SSH-only research</span></div><nav><span class="pill">AUTOMATED RESEARCH · HUMAN APPROVAL</span><a href="http://127.0.0.1:8877/login" target="_blank" rel="noopener noreferrer">Open Article Editor ↗</a></nav></div></header>
+<header><div class="wrap"><div><strong>Crypto Newsroom · Story Radar</strong><span>Bitcoin · DigiByte · Sumcoin · Ethereum · Industry | SSH-only research</span></div><nav><span class="pill">AUTOMATED RESEARCH · HUMAN APPROVAL</span><a href="http://127.0.0.1:8877/login" target="_blank" rel="noopener noreferrer">Open Newsroom Studio ↗</a></nav></div></header>
 <main class="wrap">
-<section class="hero"><div><div class="eyebrow">CRYPTO NEWSROOM ENGINE / v0.6</div><h1>News worth covering. Without the noise.</h1><p class="subtle">A private editorial desk monitoring official development and industry news. Ranked leads, AI-assisted reporting, source health, and a clear approval queue.</p></div><button id="scan">↻ Scan sources now</button></section>
+<section class="hero"><div><div class="eyebrow">EDITORIAL DISCOVERY / STORY RADAR</div><h1>News worth covering. Without the noise.</h1><p class="subtle">A private editorial desk monitoring official development and industry news. Ranked leads, AI-assisted reporting, source health, and a clear approval queue.</p></div><button id="scan">↻ Scan sources now</button></section>
 <div class="stats"><div class="stat"><span>Fresh leads</span><b id="newcount">—</b><small>Relevant stories from the past 14 days</small></div><div class="stat"><span>Prepared drafts</span><b id="draftcount">—</b><small>Private drafts awaiting editorial review</small></div><div class="stat"><span>Healthy sources</span><b id="healthycount">—</b><small id="sourcecount">of — configured</small></div></div>
 <div class="editorialnotice introsection"><strong>Automated draft preparation:</strong> <label class="toggle" for="autodraft" style="display:inline-flex;margin:4px 10px"><input type="checkbox" id="autodraft"> Enabled (max 2 Groq attempts/day)</label><span id="limits" class="subtle">Loading usage…</span><div class="subtle">Only fresh, high-priority official development leads qualify. News headlines and social links are for discovery and verification. Automatic public publishing is OFF.</div></div>
+<div class="flowbanner"><strong>01 · CHOOSE A STORY</strong><span>→</span><strong>02 · REVIEW THE AI DRAFT</strong><span>→</span><strong>03 · SEND TO STUDIO</strong><span>→</span><strong>04 · PREVIEW &amp; PUBLISH</strong></div>
 <section class="reviewdesk" id="reviewdesk" aria-label="Ready for review"><div class="sectionhead"><div><div class="eyebrow">EDITORIAL DESK</div><h2>Ready for review</h2><p class="subtle">Private AI-assisted reporting. Review every claim before publishing.</p></div><button class="mutedbutton" id="reviewall">View all drafts</button></div><div id="reviewcards" class="reviewcards"></div></section>
+<details class="diag-drawer"><summary>Analytics, source health &amp; technical diagnostics</summary>
 <section class="insights" aria-label="Audience and publishing">
   <div class="panel analytics"><div class="sectionhead"><div><div class="eyebrow">AUDIENCE</div><h2>Article traffic</h2><p class="subtle">Server-measured HTML requests, not unique people or Google impressions.</p></div><button class="mutedbutton" id="refreshanalytics">Refresh</button></div>
   <div id="analyticsdata" class="insightbody subtle">Checking whether website statistics are available…</div></div>
-  <div class="panel publications"><div class="sectionhead"><div><div class="eyebrow">PUBLICATION LIBRARY</div><h2>Published stories</h2><p class="subtle">Read-only live inventory. Editing and retraction are not enabled yet.</p></div><button class="mutedbutton" id="refreshpublished">Refresh</button></div>
+  <div class="panel publications"><div class="sectionhead"><div><div class="eyebrow">PUBLICATION LIBRARY</div><h2>Published stories</h2><p class="subtle">Read-only here. Use Publishing Studio to manage and unpublish articles.</p></div><button class="mutedbutton" id="refreshpublished">Refresh</button></div>
   <div id="publisheddata" class="insightbody subtle">Loading published articles…</div></div>
 </section>
 <section class="insights" aria-label="Editorial health and integration status">
  <div class="panel"><div class="sectionhead"><div><div class="eyebrow">QUALITY CONTROL</div><h2>Editorial review &amp; source diagnostics</h2><p>Automated checks are clues, not independent verification of reporting.</p></div><button class="mutedbutton" id="refreshquality">Refresh</button></div><div id="quality-v06" class="insightbody subtle">Analyzing prepared drafts…</div></div>
  <div class="panel"><div class="sectionhead"><div><div class="eyebrow">MEASUREMENT</div><h2>Google integrations</h2><p>GA4 · Search Console · AdSense (authorized read-only reporting)</p></div><button class="mutedbutton" id="refreshgoogle">Refresh</button></div><div id="google-v06" class="insightbody subtle">Checking account connections…</div></div>
 </section>
+</details>
 <div class="columns"><section><div class="controls"><h2>Prioritized story queue</h2><div class="enginerow"><label for="search" class="sr-only">Search story headlines</label><input id="search" class="searchbox" type="search" placeholder="Search stories…" aria-label="Search story headlines"><label for="topic" style="display:inline;margin:0">Topic</label><select id="topic" class="topicpicker"><option value="all">All topics</option><option value="DigiByte">DigiByte</option><option value="Bitcoin">Bitcoin</option><option value="Sumcoin">Sumcoin</option><option value="Ethereum">Ethereum</option><option value="Crypto">Industry</option></select><label for="filter" style="display:inline;margin-right:6px">Show</label><select id="filter" style="background:#152d48;color:white;border:1px solid #47657f;border-radius:7px;padding:7px"><option value="active">Fresh and relevant</option><option value="new">New only</option><option value="drafted">Prepared drafts</option><option value="archive">Archive &amp; off-topic</option><option value="dismissed">Dismissed</option></select></div></div><div id="stories" class="cardlist"><div class="empty">Loading source leads…</div></div><div class="statusbar" id="status" role="status"></div></section>
 <aside>
 <div class="panel"><h2>Bring a story to the newsroom</h2><p>Manually add a source you saw on Reddit, X, Facebook, DigiByte.org or GitHub. No scraping occurs.</p><form id="manual"><label for="mtitle">Story or discussion title</label><input id="mtitle" required minlength="10" maxlength="180" placeholder="What happened? (verify the claim)"><label for="murl">Original HTTPS link</label><input id="murl" required type="url" placeholder="https://..."><label for="mnote">Source note (optional)</label><textarea id="mnote" maxlength="1000" placeholder="What should we verify?"></textarea><button type="submit">+ Add source lead</button></form></div>
-<div class="panel"><h2>Publishing safeguards</h2><p><span class="ok">✓</span> Existing public article editor remains unchanged until you approve a draft.</p><p><span class="ok">✓</span> Every lead retains its original source URL.</p><p><span class="warning">●</span> Automatic publication is intentionally disabled.</p><p><span class="warning">●</span> Reddit/X/Facebook automated API integration requires approval and credentials.</p><p><span class="ok">✓</span> Groq prepares selected official-source drafts automatically within hard request/token limits.</p><p><span class="ok">✓</span> Each story has original abstract artwork, a preflight preview, and private editor handoff.</p><p><span class="warning">●</span> Third-party news feeds supply headlines and short summaries only; no image scraping.</p><p><span class="warning">●</span> Published-article correction, retraction, and restoration remain guarded future work.</p></div>
+<div class="panel"><h2>Publishing safeguards</h2><p><span class="ok">✓</span> Existing public article editor remains unchanged until you approve a draft.</p><p><span class="ok">✓</span> Every lead retains its original source URL.</p><p><span class="warning">●</span> Automatic publication is intentionally disabled.</p><p><span class="warning">●</span> Reddit/X/Facebook automated API integration requires approval and credentials.</p><p><span class="ok">✓</span> Groq prepares selected official-source drafts automatically within hard request/token limits.</p><p><span class="ok">✓</span> Each story has original abstract artwork, a preflight preview, and private editor handoff.</p><p><span class="warning">●</span> Third-party news feeds supply headlines and short summaries only; no image scraping.</p><p><span class="warning">●</span> Article withdrawal is available in Publishing Studio with explicit confirmation.</p></div>
 <div class="panel"><div class="sectionhead"><h2>SEO quick audit</h2><button class="mutedbutton" id="audit">Check</button></div><p>Fetches your public newsroom pages and checks basic metadata and schema. Search Console performance requires a separate authorized integration.</p><div id="auditout" style="font-size:12px"></div></div>
 <div class="panel"><div class="sectionhead"><h2>Source health</h2><span class="pill" id="sourcepill">Checking</span></div><p>Feeds are independently checked. Failed or stale feeds are shown instead of counted as healthy.</p><div class="sourcehealth" id="sourceinfo">Loading feeds…</div><p style="margin-top:12px">Last scan: <span id="lastscan">Never</span></p><div id="scanerrors" class="bad" style="font-size:12px"></div></div>
 </aside></div>
 </main><footer class="foot"><div class="wrap">Private newsroom engine · Source code in a public repository; all API credentials remain server-private · Public website is not modified by this service</div></footer>
-<div class="modalback" id="modalback"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="modaltitle"><div class="sectionhead"><div><div class="eyebrow">SOURCE-LINKED WORKING DRAFT</div><h2 id="modaltitle">Draft ready for review</h2></div><button class="mutedbutton" id="close" aria-label="Close">×</button></div><div class="notice warning">Not a finished, independently verified article. Confirm the source and claims, rewrite the reporting, and add an original image before publishing.</div><div id="draftdetails" class="subtle" style="font-size:12px"></div>
-<div class="artframe"><img id="storyart" alt="Original crypto network illustration" /><div><strong>Original featured artwork</strong><p class="subtle">1600×1200 PNG generated on your server; no web images copied.</p><a id="downloadart" href="#" download="newsroom-artwork.png">Download PNG</a></div></div>
+<div class="modalback" id="modalback"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="modaltitle"><div class="sectionhead"><div><div class="eyebrow">SOURCE-LINKED WORKING DRAFT</div><h2 id="modaltitle">Draft ready for review</h2></div><button class="mutedbutton" id="close" aria-label="Close">×</button></div><div class="notice warning">Not a finished, independently verified article. Confirm the source and claims, revise the article, and confirm the auto-generated image before publishing.</div><div id="draftdetails" class="subtle" style="font-size:12px"></div>
+<div class="artframe" style="display:none"><img id="storyart" alt="Original crypto network illustration" /><div><strong>Original featured artwork</strong><p class="subtle">1600×1200 PNG generated on your server; no web images copied.</p><a id="downloadart" href="#" download="newsroom-artwork.png">Download PNG</a></div></div>
 <div class="enginerow"><button class="mutedbutton" id="checkpreview">Publication metadata &amp; SEO preflight</button></div><div id="preflight" class="editorialnotice" style="display:none"></div>
 <label>Article text</label><textarea id="draftbody" readonly></textarea>
-<details class="reviewnotes" id="reviewnotes"><summary><strong>Private fact-check checklist</strong> · not included in article</summary><ul id="verificationlist"></ul><p class="subtle">Check the original linked evidence and release status before approving publication.</p></details><div class="buttons"><button class="mutedbutton" id="copy">Copy article text</button> <button id="research">Research &amp; Write with Groq</button><div><button class="mutedbutton" id="download">Download draft JSON</button> <button id="send">Send to Article Editor ↗</button></div></div><p class="notice">Groq makes private working drafts from official evidence. The original graphic is included in the editor handoff. Verify claims and image relevance before publishing. Maximum 8 requests/day, 2 per story, 2 automatic per day.</p><p id="modalstatus" class="statusbar"></p></div></div>
+<details class="reviewnotes" id="reviewnotes"><summary><strong>Private fact-check checklist</strong> · not included in article</summary><ul id="verificationlist"></ul><p class="subtle">Check the original linked evidence and release status before approving publication.</p></details><div class="buttons"><button class="mutedbutton" id="copy">Copy article text</button> <button id="research">Research &amp; Write with Groq</button><div><button class="mutedbutton" id="download">Download draft JSON</button> <button id="send">Send to Publishing Studio ↗</button></div></div><p class="notice">Groq makes private working drafts from official evidence. Publishing Studio generates and saves original article artwork automatically. Verify claims and image relevance before publishing. Maximum 8 requests/day, 2 per story, 2 automatic per day.</p><p id="modalstatus" class="statusbar"></p></div></div>
 <script>
 'use strict';const CSRF='__CSRF_TOKEN__';const $=id=>document.getElementById(id);let STO=[],current=null,currentStoryId=null,editorWindow=null;
 async function req(path,body){const options=body?{method:'POST',headers:{'Content-Type':'application/json','X-Newsroom-CSRF':CSRF},body:JSON.stringify(body)}:{};const response=await fetch(path,options);const v=await response.json();if(!response.ok)throw Error(v.error||'Request failed');return v}
@@ -179,32 +191,23 @@ $('send').onclick=async()=>{
   editorWindow=window.open('http://127.0.0.1:8877/login','DigiByteArticleEditor');
   if(!editorWindow){$('modalstatus').textContent='Please allow the editor window to open.';return}
   const transfer=Object.assign({},current);
-  // Prepare one original image. The editor validates image type/size again on Save.
-  try{
-    $('modalstatus').textContent='Preparing original artwork for the editor…';
-    const response=await fetch('/api/artwork?id='+encodeURIComponent(currentStoryId));
-    if(!response.ok)throw Error('Could not retrieve original artwork');
-    const blob=await response.blob();
-    if(blob.type!=='image/png'||blob.size>4*1024*1024)throw Error('Artwork validation failed');
-    transfer.image_data=await new Promise((resolve,reject)=>{
-      const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(Error('Image read failed'));reader.readAsDataURL(blob)
-    });
-    transfer.image_alt=transfer.image_alt||'Original abstract blockchain network illustration';
-  }catch(err){$('modalstatus').textContent='Artwork unavailable: '+err.message+'. Draft will transfer without an image.'}
+   // Fast text handoff: the Publishing Studio renders and stores original art
+   // on the server. Never block the transfer on a large PNG/browser base64.
+   delete transfer.image_data;
   const bytes=new Uint8Array(12);crypto.getRandomValues(bytes);
   handoffTicket='dgb-'+Array.from(bytes).map(n=>n.toString(16).padStart(2,'0')).join('');
   let count=0;
   const send=()=>{
-    if(!editorWindow||editorWindow.closed||++count>65){clearInterval(handoffTimer);handoffTimer=null;return}
+    if(!editorWindow||editorWindow.closed||++count>240){clearInterval(handoffTimer);handoffTimer=null;return}
     editorWindow.postMessage({type:'dgb_engine_import',version:1,ticket:handoffTicket,draft:transfer},'http://127.0.0.1:8877');
   };
-  $('modalstatus').textContent='Editor opened. The private draft and original artwork will populate automatically. Nothing has been published.';
+  $('modalstatus').textContent='Publishing Studio opened. Your article is transferring immediately; artwork is created there. Nothing is public yet.';
   handoffTimer=setInterval(send,750);send();
 };
 window.addEventListener('message',event=>{
   if(event.origin==='http://127.0.0.1:8877'&&event.data&&event.data.type==='dgb_editor_imported'&&event.data.ticket===handoffTicket){
     if(handoffTimer){clearInterval(handoffTimer);handoffTimer=null}
-    $('modalstatus').textContent=event.data.accepted?'Draft and artwork handed to editor. Verify the facts and click Save draft there.':'Import skipped to protect existing editor work.';
+    $('modalstatus').textContent=event.data.accepted?'Article and original artwork saved in Publishing Studio. Verify, preview and publish when ready.':'Import skipped to protect existing editor work.';
   }
 });
 async function loadAnalytics(){
