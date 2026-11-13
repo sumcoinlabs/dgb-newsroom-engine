@@ -92,6 +92,9 @@ button{background:#176fbb;color:white;border:1px solid #176fbb;border-radius:10p
 </section><section id="radar-tab-system" class="radar-tab-page" hidden>
 <div class="radar-subheader"><div><h2>System &amp; analytics</h2><p>Scanning, sources and metrics—out of the writing workflow.</p></div><button id="scan" type="button">↻ Scan sources</button></div>
 <div class="editorialnotice introsection"><strong>Automated draft preparation:</strong> <label class="toggle" for="autodraft" style="display:inline-flex;margin:4px 10px"><input type="checkbox" id="autodraft"> Enabled (max 2 Groq attempts/day)</label><span id="limits" class="subtle">Loading usage…</span><div class="subtle">Only fresh, high-priority official development leads qualify. News headlines and social links are for discovery and verification. Automatic public publishing is OFF.</div></div>
+<section class="panel" aria-label="Breaking news traffic" style="margin:18px 0;background:#fff;border-color:#dce5ee">
+<div class="sectionhead"><div><h2 style="margin:0 0 6px">Breaking story performance</h2><p style="margin:0;color:#5c6e80">Estimated HTML page requests over the last 30 days, excluding known bots. Not unique visitors or Google impressions.</p></div><button id="breaking-refresh" class="mutedbutton" type="button">Refresh counts</button></div>
+<div id="breaking-performance" style="margin-top:14px">Checking server traffic…</div></section>
 <details class="diag-drawer" open><summary>Technical status and reports</summary>
 <section class="insights" aria-label="Audience and publishing">
   <div class="panel analytics"><div class="sectionhead"><div><div class="eyebrow">AUDIENCE</div><h2>Article traffic</h2><p class="subtle">Server-measured HTML requests, not unique people or Google impressions.</p></div><button class="mutedbutton" id="refreshanalytics">Refresh</button></div>
@@ -252,6 +255,19 @@ window.addEventListener('message',event=>{
 async function loadAnalytics(){
   const el=$('analyticsdata');try{
     const r=await req('/api/analytics');el.replaceChildren();
+    const perf=$('breaking-performance');perf.replaceChildren();
+    const selected=[
+      ['FAA nationwide ground stop','faa-national-ground-stop-air-traffic-control-communications-november-2026'],
+      ['Microsoft Outlook outage','microsoft-outlook-365-outage-november-2026-recovery'],
+      ['SpaceX Starship Flight 15','spacex-starship-flight-15-double-catch-launch-preview-november-2026']
+    ];
+    const counts=new Map((r.articles||[]).map(x=>[x.path,Number(x.views)||0]));
+    for(const [name,slug] of selected){
+      const p='/news/'+slug+'.html',row=node('div',null,'metricrow'),link=node('a',name);
+      link.href='https://www.digibytewallet.org'+p;link.target='_blank';link.rel='noopener noreferrer';
+      row.append(link,node('strong',r.configured?Number(counts.get(p)||0).toLocaleString():'—'));perf.append(row);
+    }
+    perf.append(node('p',r.configured?'Last checked '+(r.checked_at||'not yet')+' · Refresh again after the next 15-minute log scan.':'Traffic counting is not yet configured; the numbers above are intentionally unknown, not zero.','subtle'));
     if(!r.configured){el.append(node('p',r.detail||'No measured traffic yet.','subtle'));return}
     const big=node('div',Number(r.views||0).toLocaleString(),'audience-number');
     el.append(big,node('p','Estimated requests for newsroom HTML in the last '+r.range_days+' days.','subtle'));
@@ -267,7 +283,7 @@ async function loadPublished(){
  if(!r.entries.length)el.append(node('p','No published articles reported by the public feed.'));
  }catch(e){el.textContent='Publication inventory unavailable: '+e.message}
 }
-$('refreshanalytics').onclick=loadAnalytics;$('refreshpublished').onclick=loadPublished;
+$('breaking-refresh').onclick=loadAnalytics;$('refreshanalytics').onclick=loadAnalytics;$('refreshpublished').onclick=loadPublished;
 loadAnalytics();loadPublished();
 $('audit').onclick=async()=>{const b=$('audit');b.disabled=true;$('auditout').textContent='Checking live pages…';try{const d=await req('/api/audit');const root=$('auditout');root.replaceChildren();for(let r of d.results){const line=node('div',(r.ok?'✓ ':'! ')+r.url.split('/').pop()+' — '+(r.ok?'basic technical checks passed':r.error||'needs review'),r.ok?'ok':'warning');line.style.margin='8px 0';root.append(line)}root.append(node('p','This is a basic HTML audit—not Google indexing or a performance score.'))}catch(e){$('auditout').textContent=e.message}finally{b.disabled=false}};
 refresh();
