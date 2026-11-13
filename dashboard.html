@@ -46,15 +46,53 @@ button{background:#176787;border-color:#3385a3;border-radius:10px;font-weight:67
 .modal #copy,.modal #download,.modal #checkpreview{display:none}
 .reviewdesk{border:1px solid #447697;padding:22px;border-radius:18px;background:#0d2941}
 @media(max-width:680px){.flowbanner{justify-content:flex-start}.flowbanner span{display:none}}
+
+/* v0.7.2 — focused Story Radar design. All functionality remains accessible. */
+:root{color-scheme:light;--bg:#f4f7fb;--panel:#fff;--panel2:#fff;--edge:#dae4ee;--text:#192b44;--muted:#61758b;--accent:#176fba;--good:#0b875a;--yellow:#b47a22;--red:#ba434d}
+html,body{background:#f4f7fb!important;color:var(--text)!important;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important}
+.radar-appbar{position:relative;background:#0d1d34;color:#f7faff;border-bottom:1px solid #28415b}
+.radar-appbar .wrap{max-width:1450px;padding:15px 28px;min-height:76px}
+.radar-brand{display:flex;align-items:center;gap:14px}.radar-mark{display:grid;place-items:center;border-radius:14px;background:#2184d0;width:45px;height:45px;font-size:23px;font-weight:850;color:white}
+.radar-brand strong{font-size:18px;letter-spacing:-.03em}.radar-brand small{display:block;font-size:12px;color:#a6c0da;margin-top:3px}.radar-brand-muted{color:#a9cce6}
+.radar-private{font-size:12px;background:#18304a;padding:8px 12px;border-radius:99px;color:#d4e8fa!important}.radar-studio-link{color:#edf7ff!important;font-weight:750;text-decoration:none;border:1px solid #47647f;border-radius:10px;padding:11px 15px}
+.radar-workspace{max-width:1450px;padding:26px 28px 80px}.radar-tabs{display:flex;flex-wrap:wrap;gap:7px;border-bottom:1px solid #dae4ee;margin-bottom:23px}
+button.radar-tab{background:transparent;color:#5b7086;border:0;border-bottom:3px solid transparent;border-radius:0;padding:13px 19px;font-size:14px;box-shadow:none}
+button.radar-tab.selected{border-bottom-color:#1875c5;color:#0b4275;background:#e9f3fc}
+.radar-tab-page[hidden]{display:none!important}.radar-intro{padding:14px 0 27px;display:flex;justify-content:space-between;gap:20px;align-items:end}
+.radar-intro h1{font-size:clamp(29px,3.4vw,43px);margin:7px 0 10px;color:#162b44}.radar-intro p{font-size:16px;color:#64798b;max-width:660px;margin:0}.eyebrow{color:#1871bd!important}
+.radar-pub-pill{font-size:12px;font-weight:700;color:#28704d;border:1px solid #c4e4d5;background:#eaf8f0;padding:8px 12px;border-radius:30px;white-space:nowrap}
+.stats{gap:14px;margin:0 0 18px}.stat{background:white;border:1px solid #dbe5ef;box-shadow:0 7px 20px #0e2b4d08;border-radius:15px;padding:17px 22px}.stat b{font-size:30px;color:#133a66}.stat span,.stat small{color:#6a7e90}
+.radar-next-action{color:#526c82;font-size:13px;margin:5px 0 24px}.reviewdesk{background:white!important;border:1px solid #dce6ef!important;border-radius:18px;padding:25px;box-shadow:0 12px 36px #1132540a}
+.reviewdesk .eyebrow{color:#1472bf}.reviewdesk h2{font-size:23px;color:#162b44}.reviewdesk .subtle{color:#687d90}.reviewcards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.reviewcards>*,.story,.panel{background:white!important;border:1px solid #dbe5ee!important;border-radius:14px!important;color:#21344b!important;box-shadow:0 5px 19px #102f5107!important}
+.reviewcards h3,.story h3{color:#192d43!important}.reviewcards p,.story p,.panel p,.story .source{color:#62768a!important}.story .source a{color:#176fba}.story header{background:transparent!important;border:0!important}
+button{background:#176fbb;color:white;border:1px solid #176fbb;border-radius:10px}button:hover{background:#0e5f9d;color:white}button.mutedbutton{background:#f1f6fa!important;color:#1a557f!important;border:1px solid #d1e1ed!important}button.mutedbutton:hover{background:#e3eff8!important}
+.radar-subheader{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:10px 0 22px}.radar-subheader h2{font-size:27px;color:#182d45;margin:0 0 5px}.radar-subheader p{color:#63778c;margin:0}
+.columns{grid-template-columns:minmax(0,1fr) 300px}.story{padding:18px!important}.story p{max-height:90px}.cardlist{gap:12px}
+.controls h2{color:#1a324d}.tag{background:#ecf4fa;color:#356b8e!important;border:1px solid #d3e5f2}.topicpicker,input,textarea,select,#filter{background:white!important;color:#1b304b!important;border:1px solid #cbdce9!important;border-radius:10px!important}
+#filter{padding:9px!important}.diag-drawer{background:#fff;border:1px solid #dce5ed}.diag-drawer>summary{color:#235071}.introsection{background:#f0f7fc;border:1px solid #d9e7f1;color:#314e66}
+.reviewnotes{background:#f5f9fc;border:1px solid #dce8f3;color:#33516b}.reviewnotes summary,.reviewnotes li,.modal .subtle{color:#526c83!important}
+.modalback{background:#041428b8}.modal{background:#fff!important;border:0!important;color:#182e47!important;box-shadow:0 30px 90px #00132665;border-radius:20px!important;padding:30px}
+.modal h2{color:#122b44}.modal textarea{background:#f8fbff!important;color:#213853!important;border:1px solid #d7e5ef!important;min-height:285px}.modal .warning{color:#885c1a}.modal .notice{background:#f3f7fb;border:1px solid #d9e5ef;color:#516b80}.modal button#send{background:#16804f;border-color:#16804f}
+.statusbar{color:#255b83}.bad{color:#b43e46}.ok{color:#087953}.foot{display:none}
+@media(max-width:900px){.reviewcards{grid-template-columns:1fr}.columns{grid-template-columns:1fr}.radar-appbar .wrap{padding:13px 16px}.radar-workspace{padding:16px 14px 55px}.radar-private{display:none}}
+@media(max-width:600px){.radar-intro{display:block}.radar-pub-pill{display:inline-block;margin-top:14px}.radar-tabs{gap:0}.radar-tab{flex:1;padding:12px 6px!important;font-size:12px!important}.radar-brand small{display:none}.radar-brand strong{font-size:15px}}
 </style></head><body>
-<header><div class="wrap"><div><strong>Crypto Newsroom · Story Radar</strong><span>Bitcoin · DigiByte · Sumcoin · Ethereum · Industry | SSH-only research</span></div><nav><span class="pill">AUTOMATED RESEARCH · HUMAN APPROVAL</span><a href="http://127.0.0.1:8877/login" target="_blank" rel="noopener noreferrer">Open Newsroom Studio ↗</a></nav></div></header>
-<main class="wrap">
-<section class="hero"><div><div class="eyebrow">EDITORIAL DISCOVERY / STORY RADAR</div><h1>News worth covering. Without the noise.</h1><p class="subtle">A private editorial desk monitoring official development and industry news. Ranked leads, AI-assisted reporting, source health, and a clear approval queue.</p></div><button id="scan">↻ Scan sources now</button></section>
+<header class="radar-appbar"><div class="wrap"><div class="radar-brand"><span class="radar-mark" aria-hidden="true">D</span><div><strong>DigiByte Wallet <span class="radar-brand-muted">/ Story Radar</span></strong><small>Private news discovery · human-approved publishing</small></div></div><nav><span class="radar-private">Private workspace</span><a class="radar-studio-link" href="http://127.0.0.1:8877/" target="_blank" rel="noopener noreferrer">Open Publishing Studio ↗</a></nav></div></header>
+<main class="wrap radar-workspace"><div class="radar-tabs" role="tablist" aria-label="Newsroom views">
+<button type="button" role="tab" aria-selected="true" class="radar-tab selected" data-radar-tab="review">Ready to review</button>
+<button type="button" role="tab" aria-selected="false" class="radar-tab" data-radar-tab="discover">Discover stories</button>
+<button type="button" role="tab" aria-selected="false" class="radar-tab" data-radar-tab="system">System &amp; analytics</button>
+</div><section id="radar-tab-review" class="radar-tab-page">
+<section class="radar-intro"><div><span class="eyebrow">EDITORIAL DESK</span><h1>Stories worth publishing.</h1><p>Start with AI-prepared articles. Review the evidence, then send one to the Publishing Studio.</p></div><span class="radar-pub-pill">Public auto-publishing is off</span></section>
 <div class="stats"><div class="stat"><span>Fresh leads</span><b id="newcount">—</b><small>Relevant stories from the past 14 days</small></div><div class="stat"><span>Prepared drafts</span><b id="draftcount">—</b><small>Private drafts awaiting editorial review</small></div><div class="stat"><span>Healthy sources</span><b id="healthycount">—</b><small id="sourcecount">of — configured</small></div></div>
-<div class="editorialnotice introsection"><strong>Automated draft preparation:</strong> <label class="toggle" for="autodraft" style="display:inline-flex;margin:4px 10px"><input type="checkbox" id="autodraft"> Enabled (max 2 Groq attempts/day)</label><span id="limits" class="subtle">Loading usage…</span><div class="subtle">Only fresh, high-priority official development leads qualify. News headlines and social links are for discovery and verification. Automatic public publishing is OFF.</div></div>
-<div class="flowbanner"><strong>01 · CHOOSE A STORY</strong><span>→</span><strong>02 · REVIEW THE AI DRAFT</strong><span>→</span><strong>03 · SEND TO STUDIO</strong><span>→</span><strong>04 · PREVIEW &amp; PUBLISH</strong></div>
+
+<p class="radar-next-action">Select a draft below → review its source → send to Studio for artwork and publishing.</p>
 <section class="reviewdesk" id="reviewdesk" aria-label="Ready for review"><div class="sectionhead"><div><div class="eyebrow">EDITORIAL DESK</div><h2>Ready for review</h2><p class="subtle">Private AI-assisted reporting. Review every claim before publishing.</p></div><button class="mutedbutton" id="reviewall">View all drafts</button></div><div id="reviewcards" class="reviewcards"></div></section>
-<details class="diag-drawer"><summary>Analytics, source health &amp; technical diagnostics</summary>
+</section><section id="radar-tab-system" class="radar-tab-page" hidden>
+<div class="radar-subheader"><div><h2>System &amp; analytics</h2><p>Scanning, sources and metrics—out of the writing workflow.</p></div><button id="scan" type="button">↻ Scan sources</button></div>
+<div class="editorialnotice introsection"><strong>Automated draft preparation:</strong> <label class="toggle" for="autodraft" style="display:inline-flex;margin:4px 10px"><input type="checkbox" id="autodraft"> Enabled (max 2 Groq attempts/day)</label><span id="limits" class="subtle">Loading usage…</span><div class="subtle">Only fresh, high-priority official development leads qualify. News headlines and social links are for discovery and verification. Automatic public publishing is OFF.</div></div>
+<details class="diag-drawer" open><summary>Technical status and reports</summary>
 <section class="insights" aria-label="Audience and publishing">
   <div class="panel analytics"><div class="sectionhead"><div><div class="eyebrow">AUDIENCE</div><h2>Article traffic</h2><p class="subtle">Server-measured HTML requests, not unique people or Google impressions.</p></div><button class="mutedbutton" id="refreshanalytics">Refresh</button></div>
   <div id="analyticsdata" class="insightbody subtle">Checking whether website statistics are available…</div></div>
@@ -65,14 +103,15 @@ button{background:#176787;border-color:#3385a3;border-radius:10px;font-weight:67
  <div class="panel"><div class="sectionhead"><div><div class="eyebrow">QUALITY CONTROL</div><h2>Editorial review &amp; source diagnostics</h2><p>Automated checks are clues, not independent verification of reporting.</p></div><button class="mutedbutton" id="refreshquality">Refresh</button></div><div id="quality-v06" class="insightbody subtle">Analyzing prepared drafts…</div></div>
  <div class="panel"><div class="sectionhead"><div><div class="eyebrow">MEASUREMENT</div><h2>Google integrations</h2><p>GA4 · Search Console · AdSense (authorized read-only reporting)</p></div><button class="mutedbutton" id="refreshgoogle">Refresh</button></div><div id="google-v06" class="insightbody subtle">Checking account connections…</div></div>
 </section>
-</details>
-<div class="columns"><section><div class="controls"><h2>Prioritized story queue</h2><div class="enginerow"><label for="search" class="sr-only">Search story headlines</label><input id="search" class="searchbox" type="search" placeholder="Search stories…" aria-label="Search story headlines"><label for="topic" style="display:inline;margin:0">Topic</label><select id="topic" class="topicpicker"><option value="all">All topics</option><option value="DigiByte">DigiByte</option><option value="Bitcoin">Bitcoin</option><option value="Sumcoin">Sumcoin</option><option value="Ethereum">Ethereum</option><option value="Crypto">Industry</option></select><label for="filter" style="display:inline;margin-right:6px">Show</label><select id="filter" style="background:#152d48;color:white;border:1px solid #47657f;border-radius:7px;padding:7px"><option value="active">Fresh and relevant</option><option value="new">New only</option><option value="drafted">Prepared drafts</option><option value="archive">Archive &amp; off-topic</option><option value="dismissed">Dismissed</option></select></div></div><div id="stories" class="cardlist"><div class="empty">Loading source leads…</div></div><div class="statusbar" id="status" role="status"></div></section>
+</details></section><section id="radar-tab-discover" class="radar-tab-page" hidden>
+<div class="radar-subheader"><div><h2>Discover stories</h2><p>Find official DigiByte sources or research other supported networks.</p></div></div>
+<div class="columns"><section><div class="controls"><h2>Prioritized story queue</h2><div class="enginerow"><label for="search" class="sr-only">Search story headlines</label><input id="search" class="searchbox" type="search" placeholder="Search stories…" aria-label="Search story headlines"><label for="topic" style="display:inline;margin:0">Topic</label><select id="topic" class="topicpicker"><option value="all">All topics</option><option value="DigiByte" selected>DigiByte</option><option value="Bitcoin">Bitcoin</option><option value="Sumcoin">Sumcoin</option><option value="Ethereum">Ethereum</option><option value="Crypto">Industry</option></select><label for="filter" style="display:inline;margin-right:6px">Show</label><select id="filter" style="background:#152d48;color:white;border:1px solid #47657f;border-radius:7px;padding:7px"><option value="active">Fresh and relevant</option><option value="new">New only</option><option value="drafted">Prepared drafts</option><option value="archive">Archive &amp; off-topic</option><option value="dismissed">Dismissed</option></select></div></div><div id="stories" class="cardlist"><div class="empty">Loading source leads…</div></div><div class="statusbar" id="status" role="status"></div></section>
 <aside>
 <div class="panel"><h2>Bring a story to the newsroom</h2><p>Manually add a source you saw on Reddit, X, Facebook, DigiByte.org or GitHub. No scraping occurs.</p><form id="manual"><label for="mtitle">Story or discussion title</label><input id="mtitle" required minlength="10" maxlength="180" placeholder="What happened? (verify the claim)"><label for="murl">Original HTTPS link</label><input id="murl" required type="url" placeholder="https://..."><label for="mnote">Source note (optional)</label><textarea id="mnote" maxlength="1000" placeholder="What should we verify?"></textarea><button type="submit">+ Add source lead</button></form></div>
 <div class="panel"><h2>Publishing safeguards</h2><p><span class="ok">✓</span> Existing public article editor remains unchanged until you approve a draft.</p><p><span class="ok">✓</span> Every lead retains its original source URL.</p><p><span class="warning">●</span> Automatic publication is intentionally disabled.</p><p><span class="warning">●</span> Reddit/X/Facebook automated API integration requires approval and credentials.</p><p><span class="ok">✓</span> Groq prepares selected official-source drafts automatically within hard request/token limits.</p><p><span class="ok">✓</span> Each story has original abstract artwork, a preflight preview, and private editor handoff.</p><p><span class="warning">●</span> Third-party news feeds supply headlines and short summaries only; no image scraping.</p><p><span class="warning">●</span> Article withdrawal is available in Publishing Studio with explicit confirmation.</p></div>
 <div class="panel"><div class="sectionhead"><h2>SEO quick audit</h2><button class="mutedbutton" id="audit">Check</button></div><p>Fetches your public newsroom pages and checks basic metadata and schema. Search Console performance requires a separate authorized integration.</p><div id="auditout" style="font-size:12px"></div></div>
 <div class="panel"><div class="sectionhead"><h2>Source health</h2><span class="pill" id="sourcepill">Checking</span></div><p>Feeds are independently checked. Failed or stale feeds are shown instead of counted as healthy.</p><div class="sourcehealth" id="sourceinfo">Loading feeds…</div><p style="margin-top:12px">Last scan: <span id="lastscan">Never</span></p><div id="scanerrors" class="bad" style="font-size:12px"></div></div>
-</aside></div>
+</aside></div></section>
 </main><footer class="foot"><div class="wrap">Private newsroom engine · Source code in a public repository; all API credentials remain server-private · Public website is not modified by this service</div></footer>
 <div class="modalback" id="modalback"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="modaltitle"><div class="sectionhead"><div><div class="eyebrow">SOURCE-LINKED WORKING DRAFT</div><h2 id="modaltitle">Draft ready for review</h2></div><button class="mutedbutton" id="close" aria-label="Close">×</button></div><div class="notice warning">Not a finished, independently verified article. Confirm the source and claims, revise the article, and confirm the auto-generated image before publishing.</div><div id="draftdetails" class="subtle" style="font-size:12px"></div>
 <div class="artframe" style="display:none"><img id="storyart" alt="Original crypto network illustration" /><div><strong>Original featured artwork</strong><p class="subtle">1600×1200 PNG generated on your server; no web images copied.</p><a id="downloadart" href="#" download="newsroom-artwork.png">Download PNG</a></div></div>
@@ -269,4 +308,26 @@ refresh();
  quality();google();
 })();
 </script>
-</body></html>
+<script>
+// Lightweight navigation on the existing private UI. No source fetches, no writes.
+(function(){
+'use strict';
+var names=['review','discover','system'];
+function openTab(name){
+ if(names.indexOf(name)<0)return;
+ for(var i=0;i<names.length;i++){
+  var key=names[i],page=document.getElementById('radar-tab-'+key),button=document.querySelector('[data-radar-tab="'+key+'"]');
+  if(!page||!button)continue;
+  page.hidden=(key!==name);button.classList.toggle('selected',key===name);button.setAttribute('aria-selected',key===name?'true':'false');
+ }
+ window.scrollTo(0,0);
+}
+for(var i=0;i<names.length;i++){
+ var b=document.querySelector('[data-radar-tab="'+names[i]+'"]');
+ if(b)b.addEventListener('click',function(){openTab(this.getAttribute('data-radar-tab'));});
+}
+var view=document.getElementById('reviewall');
+if(view)view.addEventListener('click',function(){openTab('discover');});
+openTab('review');
+})();
+</script></body></html>
